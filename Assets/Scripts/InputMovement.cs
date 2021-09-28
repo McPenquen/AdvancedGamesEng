@@ -7,10 +7,8 @@ public class InputMovement : MonoBehaviour
 {
     [Header("Movement Variables")]
 
-
     [SerializeField] private int movementSpeed = 10;
     [SerializeField] private int rotationSpeed = 5;
-
     void Update()
     {
         // Detect input
@@ -35,6 +33,8 @@ public class InputMovement : MonoBehaviour
         if (mouseXInput != 0 || mouseYInput != 0)
         {
             transform.Rotate(-mouseYInput * rotationSpeed, mouseXInput * rotationSpeed, 0);
+            Vector3 currentAngles = transform.eulerAngles;
+            transform.eulerAngles = new Vector3(currentAngles.x, currentAngles.y, 0);
         }
 
     }
