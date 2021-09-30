@@ -33,6 +33,7 @@ public class InputMovement : MonoBehaviour
         if (mouseXInput != 0 || mouseYInput != 0)
         {
             transform.Rotate(-mouseYInput * rotationSpeed, mouseXInput * rotationSpeed, 0);
+            // Freeze the z-axis rotation
             Vector3 currentAngles = transform.eulerAngles;
             transform.eulerAngles = new Vector3(currentAngles.x, currentAngles.y, 0);
         }
