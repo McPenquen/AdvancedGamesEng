@@ -57,7 +57,7 @@ Shader "Unlit/CustomLighting"
             {
                 // Calculate the amount of light falling on the 
                 fixed3 lightDirection = normalize(i.worldPosition - _LightSourcePosition.xyz);
-                fixed intensity = - 0.5f * dot(lightDirection, i.worldNormal) + 0.5f;
+                fixed intensity = - dot(lightDirection, i.worldNormal);
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
                 // apply fog

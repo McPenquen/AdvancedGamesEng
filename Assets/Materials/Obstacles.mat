@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Obstacles
-  m_Shader: {fileID: 4800000, guid: 08ac810e61e15d34ea8fda25f8bbbb62, type: 3}
+  m_Shader: {fileID: 4800000, guid: b9ab668ef2635af40a98868d9480e295, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -74,6 +74,9 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
+    - _CamPosition: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 0.6672944, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _LightSource: {r: 0, g: 5, b: 9, a: 1}
+    - _LightSourcePosition: {r: 0, g: 5, b: 0, a: 0}
   m_BuildTextureStacks: []
