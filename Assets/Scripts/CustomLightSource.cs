@@ -10,6 +10,14 @@ public class CustomLightSource : MonoBehaviour
     private bool isMoving = false;
     // Previous position
     private Vector3 previousPosition = new Vector3(0,0,0);
+    // Shadow objects
+    [SerializeField] GameObject[] shadows = null;
+    [SerializeField] GameObject exampleShadow = null;
+
+    void Start()
+    {
+        //GameObject o = Instantiate();
+    }
 
     void Update()
     {
@@ -17,11 +25,13 @@ public class CustomLightSource : MonoBehaviour
         isMoving = previousPosition != transform.position;
         // Save the position
         previousPosition = transform.position;
-
+        
+        // If the light source has moved update the shadows
         if (isMoving) {
             Vector4 vec4 = new Vector4(transform.position.x, transform.position.y, transform.position.z, 0);
             foreach (GameObject o in objects)
             {
+                // Update the shaders for the objects
                 Renderer r = o.GetComponent<Renderer>();
                 r.material.SetVector("_LightSourcePosition", vec4);
             }
