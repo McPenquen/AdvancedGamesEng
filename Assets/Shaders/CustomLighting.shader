@@ -33,7 +33,7 @@ Shader "Unlit/CustomLighting"
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
                 UNITY_FOG_COORDS(1)
-
+                //float4 shadowVertex : POSITION;
             };
 
             sampler2D _MainTex;
@@ -48,14 +48,12 @@ Shader "Unlit/CustomLighting"
                 o.worldPosition = mul(unity_ObjectToWorld, v.vertex);
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                //UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
             [maxvertexcount(3)]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
                 g2f o;
-
                 for (int i = 0; i < 3; i++)
                 {
                     o.vertex = input[i].vertex;
@@ -82,7 +80,7 @@ Shader "Unlit/CustomLighting"
             // make fog work
             #pragma multi_compile_fog
 
-            fixed4 frag (v2g i) : SV_Target
+            fixed4 frag (g2f i) : SV_Target
             {
                 // Calculate the amount of light falling on the 
                 fixed3 lightDirection = normalize(i.worldPosition - _LightSourcePosition.xyz);
