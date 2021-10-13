@@ -8,41 +8,7 @@ Shader "Unlit/CustomLighting"
     }
     SubShader
     {
-        //HLSLINCLUDE
-        //    struct GeomData
-        //    {
-        //        float2 uv : TEXCOORD0;
-        //        float4 vertex : SV_POSITION;
-        //        float3 worldNormal : TEXCOORD1;
-        //        float3 worldPosition : TEXCOORD2;     
-        //    };
-//
-        //    [maxvertexcount(3)]
-        //    void geom(triangle GeomData input[3], inout TriangleStream<GeomData> triStream)
-        //    {
-        //        GeomData vert0 = input[0];
-        //        GeomData vert1 = input[1];
-        //        GeomData vert2 = input[2];
-//
-        //        triStream.Append(vert0);
-        //        triStream.Append(vert1);
-        //        triStream.Append(vert2);
-        //        triStream.RestartStrip();
-        //    }
-//
-        //ENDHLSL
-        Tags { "RenderType"="Opaque" }
-        LOD 100
-
-        Pass
-        {
-            CGPROGRAM
-            #pragma vertex vert
-            //#pragma geometry geom
-            #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
-
+        CGINCLUDE
             #include "UnityCG.cginc"
 
             struct appdata
@@ -58,16 +24,16 @@ Shader "Unlit/CustomLighting"
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
-                UNITY_FOG_COORDS(1)
             };
 
             struct g2f
             {
-                float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
+                float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
+                UNITY_FOG_COORDS(1)
+
             };
 
             sampler2D _MainTex;
@@ -82,9 +48,39 @@ Shader "Unlit/CustomLighting"
                 o.worldPosition = mul(unity_ObjectToWorld, v.vertex);
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                //UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
+            [maxvertexcount(3)]
+            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
+            {
+                g2f o;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    o.vertex = input[i].vertex;
+                    o.uv = input[i].uv;
+                    o.worldPosition = input[i].worldPosition;
+                    o.worldNormal = input[i].worldNormal;
+                    UNITY_TRANSFER_FOG(o,o.vertex);
+                    triStream.Append(o);
+                }
+                triStream.RestartStrip();
+            }
+        ENDCG
+
+
+        Tags { "RenderType"="Opaque" }
+        LOD 100
+
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+            // make fog work
+            #pragma multi_compile_fog
 
             fixed4 frag (v2g i) : SV_Target
             {
@@ -101,4 +97,6 @@ Shader "Unlit/CustomLighting"
         }
     }
 }
-// learned from: https://www.youtube.com/watch?v=4XfXOEDzBx4&ab_channel=WorldofZero
+// shader basics learned from: https://www.youtube.com/watch?v=4XfXOEDzBx4&ab_channel=WorldofZero
+// geom shader learned from: https://gamedevbill.com/unity-vertex-shader-and-geometry-shader-tutorial/ 
+
