@@ -6,22 +6,18 @@ Shader "Unlit/Shadow"
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent+10"}
+        Tags { "RenderType"="Transparent" "Queue"="Geometry-10"}
         LOD 100
 
-        ZTest on
+        Cull Front
+        ZTest GEqual
         Blend SrcAlpha OneMinusSrcAlpha
 
-        Stencil
-        {
-            Ref 1
-            Comp NotEqual
-            Pass replace
-            Fail Keep
-            Zfail Keep
-            ReadMask 1
-            WriteMask
-        }
+        //Stencil
+        //{
+        //    Ref 1
+        //    Comp NotEqual
+        //}
 
         Pass
         {

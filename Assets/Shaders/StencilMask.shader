@@ -9,22 +9,17 @@ Shader "Custom/StencilMask"
     {
         Tags { "RenderType"="Transparent" "Queue"="Transparent+5" "IgnoreProjector"="True"}
         ColorMask 0
-        ZTest on
+        ZWrite off
 
         Stencil
         {
             Ref 1
             Comp NotEqual
-            Pass Replace
-            Fail Keep
-            Zfail Keep
-            ReadMask 1
-            WriteMask 1
+            Pass replace
         }
 
-        Pass
-        {
-            CGPROGRAM
+    
+            CGINCLUDE
             #pragma vertex vert
             #pragma fragment frag
 
@@ -45,6 +40,26 @@ Shader "Custom/StencilMask"
                 return fixed4(1.0, 1.0, 1.0, 1.0);
             }
             ENDCG
-        }
+            
+            Pass
+            {
+                Cull Front
+                ZTest Less
+
+                CGPROGRAM
+                #pragma vertex vert
+                #pragma fragment frag
+                ENDCG
+            }
+            Pass
+            {
+                Cull Back
+                ZTest Greater
+
+                CGPROGRAM
+                #pragma vertex vert
+                #pragma fragment frag
+                ENDCG
+            }        
     }
 }
