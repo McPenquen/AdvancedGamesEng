@@ -5,6 +5,8 @@ Shader "Unlit/CustomLighting"
         _Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Texture", 2D) = "white" {}
         _LightSourcePosition ("Light Source Position", Vector) = (0, 0 ,0, 0)
+        _ShadowColor ("Shadow Color", Color) = (0,0,0,0.5)
+        _Offset ("Offset", Vector) = (5,0,0,0)
     }
     SubShader
     {
@@ -20,7 +22,7 @@ Shader "Unlit/CustomLighting"
 
             struct v2g
             {
-                float4 vertex : SV_POSITION;
+                float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
@@ -32,53 +34,62 @@ Shader "Unlit/CustomLighting"
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
-                UNITY_FOG_COORDS(1)
-                //float4 shadowVertex : POSITION;
+                float3 shadowVertex : TEXCOORD3;
             };
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
             fixed4 _Color;
             fixed4 _LightSourcePosition;
+            fixed4 _ShadowColor;
 
             v2g vert (appdata v)
             {
                 v2g o;
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);
                 o.worldPosition = mul(unity_ObjectToWorld, v.vertex);
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.vertex = v.vertex;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
             }
-            [maxvertexcount(3)]
+
+            [maxvertexcount(6)]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
                 g2f o;
                 for (int i = 0; i < 3; i++)
                 {
-                    o.vertex = input[i].vertex;
+                    o.vertex = UnityObjectToClipPos(input[i].vertex);
                     o.uv = input[i].uv;
                     o.worldPosition = input[i].worldPosition;
                     o.worldNormal = input[i].worldNormal;
-                    UNITY_TRANSFER_FOG(o,o.vertex);
+                    o.shadowVertex = (0,0,0);
+                    triStream.Append(o);
+                }
+                triStream.RestartStrip();
+
+                for (int j = 0; j < 3; j++)
+                {
+                    o.vertex = UnityObjectToClipPos(input[j].vertex + (0,0,0,1));
+                    o.uv = input[j].uv;
+                    o.worldPosition = input[j].worldPosition;
+                    o.worldNormal = input[j].worldNormal;
+                    o.shadowVertex = (1,1,1);
                     triStream.Append(o);
                 }
                 triStream.RestartStrip();
             }
         ENDCG
 
-
-        Tags { "RenderType"="Opaque" }
-        LOD 100
-
         Pass
         {
+            Tags { "RenderType"="Opaque" }
+            LOD 100
+
             CGPROGRAM
             #pragma vertex vert
             #pragma geometry geom
             #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
 
             fixed4 frag (g2f i) : SV_Target
             {
@@ -87,8 +98,10 @@ Shader "Unlit/CustomLighting"
                 fixed intensity = - dot(lightDirection, i.worldNormal);
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
-                // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                if (i.shadowVertex.x == 1)
+                {
+                    col = (0,0,0,1);
+                }
                 return col;
             }
             ENDCG
