@@ -10,14 +10,6 @@ public class CustomLightSource : MonoBehaviour
     private bool isMoving = false;
     // Previous position
     private Vector3 previousPosition = new Vector3(0,0,0);
-    // Shadow objects
-    [SerializeField] GameObject[] shadows = null;
-    [SerializeField] GameObject exampleShadow = null;
-
-    void Start()
-    {
-        //GameObject o = Instantiate();
-    }
 
     void Update()
     {

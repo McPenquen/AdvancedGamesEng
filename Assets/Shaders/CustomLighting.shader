@@ -8,6 +8,29 @@ Shader "Unlit/CustomLighting"
     }
     SubShader
     {
+        //HLSLINCLUDE
+        //    struct GeomData
+        //    {
+        //        float2 uv : TEXCOORD0;
+        //        float4 vertex : SV_POSITION;
+        //        float3 worldNormal : TEXCOORD1;
+        //        float3 worldPosition : TEXCOORD2;     
+        //    };
+//
+        //    [maxvertexcount(3)]
+        //    void geom(triangle GeomData input[3], inout TriangleStream<GeomData> triStream)
+        //    {
+        //        GeomData vert0 = input[0];
+        //        GeomData vert1 = input[1];
+        //        GeomData vert2 = input[2];
+//
+        //        triStream.Append(vert0);
+        //        triStream.Append(vert1);
+        //        triStream.Append(vert2);
+        //        triStream.RestartStrip();
+        //    }
+//
+        //ENDHLSL
         Tags { "RenderType"="Opaque" }
         LOD 100
 
@@ -15,6 +38,7 @@ Shader "Unlit/CustomLighting"
         {
             CGPROGRAM
             #pragma vertex vert
+            //#pragma geometry geom
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
@@ -28,7 +52,16 @@ Shader "Unlit/CustomLighting"
                 float4 normal : NORMAL;
             };
 
-            struct v2f
+            struct v2g
+            {
+                float4 vertex : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float3 worldNormal : TEXCOORD1;
+                float3 worldPosition : TEXCOORD2;
+                UNITY_FOG_COORDS(1)
+            };
+
+            struct g2f
             {
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
@@ -42,9 +75,9 @@ Shader "Unlit/CustomLighting"
             fixed4 _Color;
             fixed4 _LightSourcePosition;
 
-            v2f vert (appdata v)
+            v2g vert (appdata v)
             {
-                v2f o;
+                v2g o;
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);
                 o.worldPosition = mul(unity_ObjectToWorld, v.vertex);
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -53,7 +86,7 @@ Shader "Unlit/CustomLighting"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag (v2g i) : SV_Target
             {
                 // Calculate the amount of light falling on the 
                 fixed3 lightDirection = normalize(i.worldPosition - _LightSourcePosition.xyz);
