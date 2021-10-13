@@ -53,7 +53,7 @@ Shader "Unlit/CustomLighting"
                 return o;
             }
 
-            [maxvertexcount(6)]
+            [maxvertexcount(3)]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
                 g2f o;
@@ -64,17 +64,6 @@ Shader "Unlit/CustomLighting"
                     o.worldPosition = input[i].worldPosition;
                     o.worldNormal = input[i].worldNormal;
                     o.shadowVertex = (0,0,0);
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
-
-                for (int j = 0; j < 3; j++)
-                {
-                    o.vertex = UnityObjectToClipPos(input[j].vertex + (0,0,0,1));
-                    o.uv = input[j].uv;
-                    o.worldPosition = input[j].worldPosition;
-                    o.worldNormal = input[j].worldNormal;
-                    o.shadowVertex = (1,1,1);
                     triStream.Append(o);
                 }
                 triStream.RestartStrip();
@@ -98,10 +87,6 @@ Shader "Unlit/CustomLighting"
                 fixed intensity = - dot(lightDirection, i.worldNormal);
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
-                if (i.shadowVertex.x == 1)
-                {
-                    col = (0,0,0,1);
-                }
                 return col;
             }
             ENDCG
