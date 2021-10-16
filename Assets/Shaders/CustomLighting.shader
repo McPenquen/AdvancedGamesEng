@@ -5,8 +5,7 @@ Shader "Unlit/CustomLighting"
         _Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Texture", 2D) = "white" {}
         _LightSourcePosition ("Light Source Position", Vector) = (0, 0 ,0, 0)
-        _ShadowColor ("Shadow Color", Color) = (0,0,0,0.5)
-        _Offset ("Offset", Vector) = (5,0,0,0)
+        _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
     }
     SubShader
     {
@@ -34,7 +33,6 @@ Shader "Unlit/CustomLighting"
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
-                float3 shadowVertex : TEXCOORD3;
             };
 
             sampler2D _MainTex;
@@ -52,22 +50,6 @@ Shader "Unlit/CustomLighting"
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
             }
-
-            [maxvertexcount(3)]
-            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
-            {
-                g2f o;
-                for (int i = 0; i < 3; i++)
-                {
-                    o.vertex = UnityObjectToClipPos(input[i].vertex);
-                    o.uv = input[i].uv;
-                    o.worldPosition = input[i].worldPosition;
-                    o.worldNormal = input[i].worldNormal;
-                    o.shadowVertex = (0,0,0);
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
-            }
         ENDCG
 
         Pass
@@ -80,6 +62,21 @@ Shader "Unlit/CustomLighting"
             #pragma geometry geom
             #pragma fragment frag
 
+            [maxvertexcount(3)]
+            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
+            {
+                g2f o;
+                for (int i = 0; i < 3; i++)
+                {
+                    o.vertex = UnityObjectToClipPos(input[i].vertex + (20,0,0,0));
+                    o.uv = input[i].uv;
+                    o.worldPosition = input[i].worldPosition;
+                    o.worldNormal = input[i].worldNormal;
+                    triStream.Append(o);
+                }
+                triStream.RestartStrip();
+            }
+
             fixed4 frag (g2f i) : SV_Target
             {
                 // Calculate the amount of light falling on the 
@@ -88,6 +85,47 @@ Shader "Unlit/CustomLighting"
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
                 return col;
+            }
+            ENDCG
+        }
+        Pass
+        {
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-10" }
+            LOD 100
+
+            Cull Front
+            //ZTest GEqual
+            Blend SrcAlpha OneMinusSrcAlpha
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+
+            [maxvertexcount(3)]
+            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
+            {
+                // Transform the vertices to be of a shadow
+                g2f o;
+                for (int i = 0; i < 3; i++)
+                {
+                    fixed4 oldVert = input[i].vertex;
+                    oldVert.y = oldVert.y + 0.01;
+                    oldVert.z = oldVert.z - 1.01;
+                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
+                    o.vertex = newVert;
+                    o.uv = input[i].uv;
+                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
+                    o.worldNormal = input[i].worldNormal;
+                    triStream.Append(o);
+                }
+                triStream.RestartStrip();
+            }
+
+            fixed4 frag (g2f i) : SV_Target
+            {
+                // Return shadow color
+                return _ShadowColor;
             }
             ENDCG
         }
