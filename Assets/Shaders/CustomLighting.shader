@@ -11,14 +11,14 @@ Shader "Unlit/CustomLighting"
     {
         CGINCLUDE
             #include "UnityCG.cginc"
-
+            // Initial app data
             struct appdata
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
                 float4 normal : NORMAL;
             };
-
+            // Vertex shader info send to geomerty shader
             struct v2g
             {
                 float4 vertex : POSITION;
@@ -26,7 +26,7 @@ Shader "Unlit/CustomLighting"
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
             };
-
+            // Geometry shader info send to fragment shader
             struct g2f
             {
                 float4 vertex : SV_POSITION;
@@ -41,6 +41,7 @@ Shader "Unlit/CustomLighting"
             fixed4 _LightSourcePosition;
             fixed4 _ShadowColor;
 
+            // The vertex shader
             v2g vert (appdata v)
             {
                 v2g o;
@@ -50,18 +51,7 @@ Shader "Unlit/CustomLighting"
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
             }
-        ENDCG
-
-        Pass
-        {
-            Tags { "RenderType"="Opaque" }
-            LOD 100
-
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma geometry geom
-            #pragma fragment frag
-
+            // The geometry shader for the object
             [maxvertexcount(3)]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
@@ -76,6 +66,46 @@ Shader "Unlit/CustomLighting"
                 }
                 triStream.RestartStrip();
             }
+            // The geometry shader for the shadow
+            [maxvertexcount(3)]
+            void shadowGeom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
+            {
+                // Transform the vertices to be of a shadow
+                g2f o;
+                for (int i = 0; i < 3; i++)
+                {
+                    fixed4 oldVert = input[i].vertex;
+                    //oldVert.y = oldVert.y + 0.01;
+                    //oldVert.z = oldVert.z - 1.01;
+                    oldVert.y = oldVert.y  -0.5;
+                    oldVert.z = oldVert.z - 1.01;
+                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
+                    o.vertex = newVert;
+                    o.uv = input[i].uv;
+                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
+                    o.worldNormal = input[i].worldNormal;
+                    triStream.Append(o);
+                }
+                triStream.RestartStrip();
+            }
+            // The shadow fragment shader
+            fixed4 shadowFrag (g2f i) : SV_Target
+            {
+                // Return shadow color
+                return _ShadowColor;
+            }
+
+        ENDCG
+
+        Pass
+        {
+            Tags { "RenderType"="Opaque" }
+            LOD 100
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
 
             fixed4 frag (g2f i) : SV_Target
             {
@@ -110,36 +140,8 @@ Shader "Unlit/CustomLighting"
 
             CGPROGRAM
             #pragma vertex vert
-            #pragma geometry geom
-            #pragma fragment frag
-
-            [maxvertexcount(3)]
-            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
-            {
-                // Transform the vertices to be of a shadow
-                g2f o;
-                for (int i = 0; i < 3; i++)
-                {
-                    fixed4 oldVert = input[i].vertex;
-                    //oldVert.y = oldVert.y + 0.01;
-                    //oldVert.z = oldVert.z - 1.01;
-                    oldVert.y = oldVert.y  -0.5;
-                    oldVert.z = oldVert.z - 1.01;
-                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
-                    o.vertex = newVert;
-                    o.uv = input[i].uv;
-                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
-                    o.worldNormal = input[i].worldNormal;
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
-            }
-
-            fixed4 frag (g2f i) : SV_Target
-            {
-                // Return shadow color
-                return _ShadowColor;
-            }
+            #pragma geometry shadowGeom
+            #pragma fragment shadowFrag
             ENDCG
         }
         // Shadow pass 2
@@ -163,36 +165,8 @@ Shader "Unlit/CustomLighting"
 
             CGPROGRAM
             #pragma vertex vert
-            #pragma geometry geom
-            #pragma fragment frag
-
-            [maxvertexcount(3)]
-            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
-            {
-                // Transform the vertices to be of a shadow
-                g2f o;
-                for (int i = 0; i < 3; i++)
-                {
-                    fixed4 oldVert = input[i].vertex;
-                    //oldVert.y = oldVert.y + 0.01;
-                    //oldVert.z = oldVert.z - 1.01;
-                    oldVert.y = oldVert.y  -0.5;
-                    oldVert.z = oldVert.z - 1.01;
-                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
-                    o.vertex = newVert;
-                    o.uv = input[i].uv;
-                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
-                    o.worldNormal = input[i].worldNormal;
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
-            }
-
-            fixed4 frag (g2f i) : SV_Target
-            {
-                // Return shadow color
-                return _ShadowColor;
-            }
+            #pragma geometry shadowGeom
+            #pragma fragment shadowFrag
             ENDCG
         }
         // Shadow Pass 3
@@ -214,36 +188,8 @@ Shader "Unlit/CustomLighting"
 
             CGPROGRAM
             #pragma vertex vert
-            #pragma geometry geom
-            #pragma fragment frag
-
-            [maxvertexcount(3)]
-            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
-            {
-                // Transform the vertices to be of a shadow
-                g2f o;
-                for (int i = 0; i < 3; i++)
-                {
-                    fixed4 oldVert = input[i].vertex;
-                    //oldVert.y = oldVert.y + 0.01;
-                    //oldVert.z = oldVert.z - 1.01;
-                    oldVert.y = oldVert.y  -0.5;
-                    oldVert.z = oldVert.z - 1.01;
-                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
-                    o.vertex = newVert;
-                    o.uv = input[i].uv;
-                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
-                    o.worldNormal = input[i].worldNormal;
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
-            }
-
-            fixed4 frag (g2f i) : SV_Target
-            {
-                // Return shadow color
-                return _ShadowColor;
-            }
+            #pragma geometry shadowGeom
+            #pragma fragment shadowFrag
             ENDCG
         }
     }
