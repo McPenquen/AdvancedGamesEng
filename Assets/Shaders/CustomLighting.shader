@@ -88,14 +88,25 @@ Shader "Unlit/CustomLighting"
             }
             ENDCG
         }
+
+        // Shadow Passes beneath
+        // Shadow pass 1
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry-10" }
+            Tags { "RenderType"="Opaque" "Queue"="Geometry+1" }
             LOD 100
 
             Cull Front
-            //ZTest GEqual
             Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref 0
+                Comp always
+                Pass keep
+                Fail keep
+                ZFail IncrWrap
+            }
+            ColorMask 0
 
             CGPROGRAM
             #pragma vertex vert
@@ -110,7 +121,113 @@ Shader "Unlit/CustomLighting"
                 for (int i = 0; i < 3; i++)
                 {
                     fixed4 oldVert = input[i].vertex;
-                    oldVert.y = oldVert.y + 0.01;
+                    //oldVert.y = oldVert.y + 0.01;
+                    //oldVert.z = oldVert.z - 1.01;
+                    oldVert.y = oldVert.y  -0.5;
+                    oldVert.z = oldVert.z - 1.01;
+                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
+                    o.vertex = newVert;
+                    o.uv = input[i].uv;
+                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
+                    o.worldNormal = input[i].worldNormal;
+                    triStream.Append(o);
+                }
+                triStream.RestartStrip();
+            }
+
+            fixed4 frag (g2f i) : SV_Target
+            {
+                // Return shadow color
+                return _ShadowColor;
+            }
+            ENDCG
+        }
+        // Shadow pass 2
+        Pass
+        {
+            Tags { "RenderType"="Opaque" "Queue"="Geometry+1" }
+            LOD 100
+
+            Cull Back
+            Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref 0
+                Comp always
+                Pass keep
+                Fail keep
+                ZFail DecrWrap
+            }
+
+            ColorMask 0
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+
+            [maxvertexcount(3)]
+            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
+            {
+                // Transform the vertices to be of a shadow
+                g2f o;
+                for (int i = 0; i < 3; i++)
+                {
+                    fixed4 oldVert = input[i].vertex;
+                    //oldVert.y = oldVert.y + 0.01;
+                    //oldVert.z = oldVert.z - 1.01;
+                    oldVert.y = oldVert.y  -0.5;
+                    oldVert.z = oldVert.z - 1.01;
+                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
+                    o.vertex = newVert;
+                    o.uv = input[i].uv;
+                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
+                    o.worldNormal = input[i].worldNormal;
+                    triStream.Append(o);
+                }
+                triStream.RestartStrip();
+            }
+
+            fixed4 frag (g2f i) : SV_Target
+            {
+                // Return shadow color
+                return _ShadowColor;
+            }
+            ENDCG
+        }
+        // Shadow Pass 3
+                Pass
+        {
+            Tags { "RenderType"="Opaque" "Queue"="Geometry+1" }
+            LOD 100
+
+            Cull Back
+            Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+                Pass keep
+                Fail keep
+                ZFail keep
+            }
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+
+            [maxvertexcount(3)]
+            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
+            {
+                // Transform the vertices to be of a shadow
+                g2f o;
+                for (int i = 0; i < 3; i++)
+                {
+                    fixed4 oldVert = input[i].vertex;
+                    //oldVert.y = oldVert.y + 0.01;
+                    //oldVert.z = oldVert.z - 1.01;
+                    oldVert.y = oldVert.y  -0.5;
                     oldVert.z = oldVert.z - 1.01;
                     fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
                     o.vertex = newVert;
@@ -133,4 +250,4 @@ Shader "Unlit/CustomLighting"
 }
 // shader basics learned from: https://www.youtube.com/watch?v=4XfXOEDzBx4&ab_channel=WorldofZero
 // geom shader learned from: https://gamedevbill.com/unity-vertex-shader-and-geometry-shader-tutorial/ 
-
+// stencil test learned from: https://liu-if-else.github.io/stencil-buffer's-uses-in-unity3d/ 
