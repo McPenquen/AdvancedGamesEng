@@ -78,7 +78,7 @@ Shader "Unlit/CustomLighting"
                     //oldVert.y = oldVert.y + 0.01;
                     //oldVert.z = oldVert.z - 1.01;
                     oldVert.y = oldVert.y  -0.5;
-                    oldVert.z = oldVert.z - 1.01;
+                    oldVert.z = oldVert.z - 0.81;
                     fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
                     o.vertex = newVert;
                     o.uv = input[i].uv;
@@ -119,21 +119,18 @@ Shader "Unlit/CustomLighting"
             ENDCG
         }
 
-        // Shadow Passes beneath
+        // Shadow Passes beneath - Carmack's
         // Shadow pass 1
         Pass
         {
-            Tags { "RenderType"="Opaque" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
 
             Cull Front
-            Blend SrcAlpha OneMinusSrcAlpha
             Stencil
             {
                 Ref 0
                 Comp always
-                Pass keep
-                Fail keep
                 ZFail IncrWrap
             }
             ColorMask 0
@@ -147,17 +144,14 @@ Shader "Unlit/CustomLighting"
         // Shadow pass 2
         Pass
         {
-            Tags { "RenderType"="Opaque" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
 
             Cull Back
-            Blend SrcAlpha OneMinusSrcAlpha
             Stencil
             {
                 Ref 0
                 Comp always
-                Pass keep
-                Fail keep
                 ZFail DecrWrap
             }
 
@@ -172,7 +166,7 @@ Shader "Unlit/CustomLighting"
         // Shadow Pass 3
                 Pass
         {
-            Tags { "RenderType"="Opaque" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
 
             Cull Back
@@ -181,9 +175,6 @@ Shader "Unlit/CustomLighting"
             {
                 Ref 1
                 Comp equal 
-                Pass keep
-                Fail keep
-                ZFail keep
             }
 
             CGPROGRAM
