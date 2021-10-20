@@ -4,8 +4,8 @@ Shader "Unlit/ShadowVolumeObjects"
     {
         _Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Texture", 2D) = "white" {}
-        _LightSourcePosition ("Light Source Position", Vector) = (0, 0 ,0, 0)
-        _LightSourceRadius ("Light source radius", Float) = 10 
+        _LightSourcePosition ("Light Source Position", Vector) = (0, 5 ,0, 0)
+        _LightSourceRadius ("Light source radius", Float) = 20 
         _LightSourcePower ("Light source power", Float) = 10 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _ShadowBias ("Shadow volume bias", Float) = 0.01 
@@ -163,38 +163,42 @@ Shader "Unlit/ShadowVolumeObjects"
                     }
                     
                     // Compute again the normals and light directions                    
-                    //normals[0] = cross(input[v1].vertex - input[v0].vertex, input[v2].vertex - input[v0].vertex);
-                    //normals[1] = cross(input[v2].vertex - input[v1].vertex, input[v0].vertex - input[v1].vertex);
-                    //normals[2] = cross(input[v0].vertex - input[v2].vertex, input[v1].vertex - input[v2].vertex);
-                    //toLightDirs[0] = _LightSourcePosition - input[v0].vertex;
-                    //toLightDirs[1] = _LightSourcePosition - input[v1].vertex;
-                    //toLightDirs[2] = _LightSourcePosition - input[v2].vertex;
+                    normals[0] = cross(input[v1].vertex - input[v0].vertex, input[v2].vertex - input[v0].vertex);
+                    normals[1] = cross(input[v2].vertex - input[v1].vertex, input[v0].vertex - input[v1].vertex);
+                    normals[2] = cross(input[v0].vertex - input[v2].vertex, input[v1].vertex - input[v2].vertex);
+                    toLightDirs[0] = _LightSourcePosition - input[v0].vertex;
+                    toLightDirs[1] = _LightSourcePosition - input[v1].vertex;
+                    toLightDirs[2] = _LightSourcePosition - input[v2].vertex;
+
+                    // Orient the triangle correctly
+                    int i0 = facesLight ? v0 : v1;
+                    int i1 = facesLight ? v1 : v0;
 
                     // Triangle 1 from the front cap
-                    fixed4 oldVert = frontCap[v0];
+                    fixed4 oldVert = frontCap[i0];
                     o.vertex = UnityObjectToClipPos(oldVert);
                     triStream.Append(o);
 
-                    oldVert = frontCap[v1];
+                    oldVert = frontCap[i1];
                     o.vertex = UnityObjectToClipPos(oldVert);
                     triStream.Append(o);
 
-                    oldVert = backCap[v0];
+                    oldVert = backCap[i0];
                     o.vertex = UnityObjectToClipPos(oldVert);
                     triStream.Append(o); 
 
                     triStream.RestartStrip();
 
                     // Triangle 1 from the back cap
-                    oldVert = backCap[v0];
+                    oldVert = backCap[i0];
                     o.vertex = UnityObjectToClipPos(oldVert);
                     triStream.Append(o);
 
-                    oldVert = backCap[v1];
+                    oldVert = backCap[i1];
                     o.vertex = UnityObjectToClipPos(oldVert);
                     triStream.Append(o);
 
-                    oldVert = frontCap[v0];
+                    oldVert = frontCap[i1];
                     o.vertex = UnityObjectToClipPos(oldVert);
                     triStream.Append(o);    
 
