@@ -64,6 +64,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _LightSourceRadius: 1
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
@@ -79,4 +80,5 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _LightSource: {r: 0, g: 5, b: 9, a: 1}
     - _LightSourcePosition: {r: 0, g: 5, b: 0, a: 0}
+    - _ShadowColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_BuildTextureStacks: []

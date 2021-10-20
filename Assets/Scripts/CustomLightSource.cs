@@ -10,6 +10,9 @@ public class CustomLightSource : MonoBehaviour
     private bool isMoving = false;
     // Previous position
     private Vector3 previousPosition = new Vector3(0,0,0);
+    // Light source properties
+    [SerializeField] private float radius = 10; // radius of the reach
+    [SerializeField] private float power = 10; // power
 
     void Update()
     {
@@ -28,5 +31,14 @@ public class CustomLightSource : MonoBehaviour
                 r.material.SetVector("_LightSourcePosition", vec4);
             }
         }
+        // Update the light source's power and radius
+        foreach (GameObject o in objects)
+        {
+            // Update the shaders for the objects
+            Renderer r = o.GetComponent<Renderer>();
+            r.material.SetFloat("_LightSourcePower", power);
+            r.material.SetFloat("_LightSourceRadius", radius);
+        }
+
     }
 }
