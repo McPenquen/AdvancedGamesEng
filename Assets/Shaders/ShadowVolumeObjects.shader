@@ -1,10 +1,11 @@
-Shader "Unlit/CustomLighting"
+Shader "Unlit/ShadowVolumeObjects"
 {
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Texture", 2D) = "white" {}
         _LightSourcePosition ("Light Source Position", Vector) = (0, 0 ,0, 0)
+        _LightSourceRadius ("Light source radius", Float) = 20 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
     }
     SubShader
@@ -40,6 +41,7 @@ Shader "Unlit/CustomLighting"
             fixed4 _Color;
             fixed4 _LightSourcePosition;
             fixed4 _ShadowColor;
+            fixed _LightSourceRadius;
 
             // The vertex shader
             v2g vert (appdata v)
@@ -58,7 +60,7 @@ Shader "Unlit/CustomLighting"
                 g2f o;
                 for (int i = 0; i < 3; i++)
                 {
-                    o.vertex = UnityObjectToClipPos(input[i].vertex + (20,0,0,0));
+                    o.vertex = UnityObjectToClipPos(input[i].vertex);
                     o.uv = input[i].uv;
                     o.worldPosition = input[i].worldPosition;
                     o.worldNormal = input[i].worldNormal;
@@ -75,14 +77,11 @@ Shader "Unlit/CustomLighting"
                 for (int i = 0; i < 3; i++)
                 {
                     fixed4 oldVert = input[i].vertex;
-                    //oldVert.y = oldVert.y + 0.01;
-                    //oldVert.z = oldVert.z - 1.01;
                     oldVert.y = oldVert.y  -0.5;
                     oldVert.z = oldVert.z - 0.81;
-                    fixed4 newVert = UnityObjectToClipPos(oldVert + (0,0,0,0)) + (0,0,0,0);
-                    o.vertex = newVert;
+                    o.vertex = UnityObjectToClipPos(oldVert);
                     o.uv = input[i].uv;
-                    o.worldPosition = input[i].worldPosition + (10,10,0,0);
+                    o.worldPosition = input[i].worldPosition;
                     o.worldNormal = input[i].worldNormal;
                     triStream.Append(o);
                 }
@@ -109,9 +108,12 @@ Shader "Unlit/CustomLighting"
 
             fixed4 frag (g2f i) : SV_Target
             {
-                // Calculate the amount of light falling on the 
+                // Calculate the amount of light falling on the pixel
                 fixed3 lightDirection = normalize(i.worldPosition - _LightSourcePosition.xyz);
                 fixed intensity = - dot(lightDirection, i.worldNormal);
+                // Adjust the intensity based on the radius of the light source
+                float distanceToLight = length(i.worldPosition - _LightSourcePosition.xyz);
+                //intensity = intensity * _LightSourceRadius / distanceToLight;
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
                 return col;
@@ -163,8 +165,8 @@ Shader "Unlit/CustomLighting"
             #pragma fragment shadowFrag
             ENDCG
         }
-        // Shadow Pass 3
-                Pass
+        // Shadow Pass 3 - show the image
+        Pass
         {
             Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
