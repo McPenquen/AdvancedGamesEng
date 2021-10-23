@@ -9,6 +9,7 @@ Shader "Unlit/ShadowVolumeObjects"
         _LightSourcePower ("Light source power", Float) = 10 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _ShadowBias ("Shadow volume bias", Float) = 0.01 
+        _ObjectCenter ("The object center's world location", Vector) = (0,0,0,0) 
     }
     SubShader
     {
@@ -51,6 +52,7 @@ Shader "Unlit/ShadowVolumeObjects"
             fixed _LightSourceRadius;
             fixed _LightSourcePower;
             fixed _ShadowBias;
+            fixed3 _ObjectCenter;
 
             // The vertex shader
             v2g vert (appdata v)
@@ -99,7 +101,7 @@ Shader "Unlit/ShadowVolumeObjects"
                     fixed4 oldVert = input[i].vertex;
                     frontCap[i] = oldVert;
                     o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);
+                    //triStream.Append(o);
                 }
 
                 // Get the distance to light for all verices
@@ -115,7 +117,7 @@ Shader "Unlit/ShadowVolumeObjects"
                 if (castShadows)
                 {
                     // Create the front cap only if we are casting shadows
-                    triStream.RestartStrip();
+                    //triStream.RestartStrip();
 
                     // Then the back cap
                     for (int i = 0; i < 3; i++)
@@ -141,7 +143,7 @@ Shader "Unlit/ShadowVolumeObjects"
                     triStream.RestartStrip();
 
                     // Loop over the edges and connect the back and front cap
-                    for (int i = 0; i < 3; i++)
+                    for (int i = 0; i < 1; i++)
                     {
                         // Find neighbour indeces for this triangle
                         int v0 = i;
@@ -176,20 +178,20 @@ Shader "Unlit/ShadowVolumeObjects"
 
                         triStream.RestartStrip();
     
-                        // Triangle 1 from the back cap
-                        oldVert = backCap[v0];
-                        o.vertex = UnityObjectToClipPos(oldVert);
-                        triStream.Append(o);
-
-                        oldVert = backCap[v1];
-                        o.vertex = UnityObjectToClipPos(oldVert);
-                        triStream.Append(o);
-
-                        oldVert = frontCap[v1];
-                        o.vertex = UnityObjectToClipPos(oldVert);
-                        triStream.Append(o);    
-
-                        triStream.RestartStrip(); 
+                        // Triangle 2 from the back cap
+                        //oldVert = backCap[v0];
+                        //o.vertex = UnityObjectToClipPos(oldVert);
+                        //triStream.Append(o);
+//
+                        //oldVert = backCap[v1];
+                        //o.vertex = UnityObjectToClipPos(oldVert);
+                        //triStream.Append(o);
+//
+                        //oldVert = frontCap[v1];
+                        //o.vertex = UnityObjectToClipPos(oldVert);
+                        //triStream.Append(o);    
+//
+                        //triStream.RestartStrip(); 
                     }
                 }
             }
