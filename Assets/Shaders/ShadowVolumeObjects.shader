@@ -77,9 +77,126 @@ Shader "Unlit/ShadowVolumeObjects"
                 }
                 triStream.RestartStrip();
             }
+
             // The geometry shader for the shadow
             [maxvertexcount(24)]
             void shadowGeom(triangle v2g input[3], inout TriangleStream<sg2f> triStream)
+            {
+                // Determine if we cast shadows
+                bool castShadows = false;
+
+                // Front cap vertices
+                float4 frontCap[3];
+                // Back cap vertices
+                float4 backCap[3];
+
+                // The object to retur
+                sg2f o;
+
+                // First the front cap
+                for (int i = 0; i < 3; i++)
+                {
+                    fixed4 oldVert = input[i].vertex;
+                    frontCap[i] = oldVert;
+                    o.vertex = UnityObjectToClipPos(oldVert);
+                    triStream.Append(o);
+                }
+
+                // Get the distance to light for all verices
+                fixed toLightDistance = length(_LightSourcePosition - input[0].worldPosition);
+                fixed toLightDistance2 = length(_LightSourcePosition - input[1].worldPosition);
+                fixed toLightDistance3 = length(_LightSourcePosition - input[2].worldPosition);
+                // Cast shadows only if we have all vertices within the radius of the light
+                castShadows = (_LightSourceRadius - toLightDistance) > 0 && 
+                    (_LightSourceRadius - toLightDistance2) > 0 &&
+                    (_LightSourceRadius - toLightDistance3) > 0;
+
+                // Cast shadows only if it is within the light's radius
+                if (castShadows)
+                {
+                    // Create the front cap only if we are casting shadows
+                    triStream.RestartStrip();
+
+                    // Then the back cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        // Get the distance to light
+                        fixed toLightDistance = length(_LightSourcePosition - input[i].worldPosition);
+                        // Calculate the displacement of the shadow vertices 
+                        fixed shadowBackCapDisplacement = _LightSourceRadius - toLightDistance;
+
+                        float4 oldVert = input[i].vertex;
+                        fixed3 toLightDirection = normalize(input[i].worldPosition - _LightSourcePosition.xyz);
+
+                        oldVert.x = oldVert.x + toLightDirection.x * (_LightSourceRadius - toLightDistance);
+                        oldVert.y = oldVert.y + toLightDirection.y * (_LightSourceRadius - toLightDistance);
+                        oldVert.z = oldVert.z + toLightDirection.z * (_LightSourceRadius - toLightDistance);
+
+                        backCap[i] = oldVert;
+
+                        o.vertex = UnityObjectToClipPos(oldVert);
+                        triStream.Append(o);
+                        
+                    }
+                    triStream.RestartStrip();
+
+                    // Loop over the edges and connect the back and front cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        // Find neighbour indeces for this triangle
+                        int v0 = i;
+                        int v1 = i+1;
+                        int v2 = i+2;
+
+                        if (i == 1)
+                        {
+                            v0 = 1;
+                            v1 = 2;
+                            v2 = 0;
+                        }
+                        else if (i == 2)
+                        {
+                            v0 = 2;
+                            v1 = 0;
+                            v2 = 1;
+                        }
+
+                        // Triangle 1 from the front cap
+                        fixed4 oldVert = frontCap[v0];
+                        o.vertex = UnityObjectToClipPos(oldVert);
+                        triStream.Append(o);
+
+                        oldVert = frontCap[v1];
+                        o.vertex = UnityObjectToClipPos(oldVert);
+                        triStream.Append(o);
+
+                        oldVert = backCap[v0];
+                        o.vertex = UnityObjectToClipPos(oldVert);
+                        triStream.Append(o); 
+
+                        triStream.RestartStrip();
+    
+                        // Triangle 1 from the back cap
+                        oldVert = backCap[v0];
+                        o.vertex = UnityObjectToClipPos(oldVert);
+                        triStream.Append(o);
+
+                        oldVert = backCap[v1];
+                        o.vertex = UnityObjectToClipPos(oldVert);
+                        triStream.Append(o);
+
+                        oldVert = frontCap[v1];
+                        o.vertex = UnityObjectToClipPos(oldVert);
+                        triStream.Append(o);    
+
+                        triStream.RestartStrip(); 
+                    }
+                }
+            }
+
+            // The geometry shader for the shadow
+            [maxvertexcount(24)]
+            void oldShadowGeom(triangle v2g input[3], inout TriangleStream<sg2f> triStream)
             {
                 float3 normals[3];
                 float3 toLightDirs[3];
@@ -203,7 +320,7 @@ Shader "Unlit/ShadowVolumeObjects"
                     triStream.Append(o);    
 
                     triStream.RestartStrip(); 
-                };
+                }
             }
             // The shadow fragment shader
             fixed4 shadowFrag (sg2f i) : SV_Target
@@ -291,20 +408,33 @@ Shader "Unlit/ShadowVolumeObjects"
         //    ENDCG
         //}
         //// Shadow Pass 3 - show the image
+        //Pass
+        //{
+        //    Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+        //    LOD 100
+//
+        //    //Cull Back
+        //    Blend SrcAlpha OneMinusSrcAlpha
+        //    //Stencil
+        //    //{
+        //    //    Ref 1
+        //    //    Comp equal 
+        //    //}
+//
+        //    //ColorMask 0
+//
+        //    CGPROGRAM
+        //    #pragma vertex vert
+        //    #pragma geometry shadowGeom
+        //    #pragma fragment shadowFrag
+        //    ENDCG
+        //}
+
         Pass
         {
             Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
-
-            //Cull Back
             Blend SrcAlpha OneMinusSrcAlpha
-            //Stencil
-            //{
-            //    Ref 1
-            //    Comp equal 
-            //}
-
-            //ColorMask 0
 
             CGPROGRAM
             #pragma vertex vert
