@@ -409,76 +409,19 @@ Shader "Unlit/ShadowVolumeObjects"
 
         // Shadow Passes beneath - Carmack's
         // Shadow pass 1
-        //Pass
-        //{
-        //    Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
-        //    LOD 100
-//
-        //    Cull Front
-        //    Stencil
-        //    {
-        //        Ref 0
-        //        Comp always
-        //        ZFail IncrWrap
-        //    }
-        //    ColorMask 0
-//
-        //    CGPROGRAM
-        //    #pragma vertex vert
-        //    #pragma geometry shadowGeom
-        //    #pragma fragment shadowFrag
-        //    ENDCG
-        //}
-        //// Shadow pass 2
-        //Pass
-        //{
-        //    Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
-        //    LOD 100
-//
-        //    Cull Back
-        //    Stencil
-        //    {
-        //        Ref 0
-        //        Comp always
-        //        ZFail DecrWrap
-        //    }
-//
-        //    ColorMask 0
-//
-        //    CGPROGRAM
-        //    #pragma vertex vert
-        //    #pragma geometry shadowGeom
-        //    #pragma fragment shadowFrag
-        //    ENDCG
-        //}
-        //// Shadow Pass 3 - show the image
-        //Pass
-        //{
-        //    Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
-        //    LOD 100
-//
-        //    //Cull Back
-        //    Blend SrcAlpha OneMinusSrcAlpha
-        //    //Stencil
-        //    //{
-        //    //    Ref 1
-        //    //    Comp equal 
-        //    //}
-//
-        //    //ColorMask 0
-//
-        //    CGPROGRAM
-        //    #pragma vertex vert
-        //    #pragma geometry shadowGeom
-        //    #pragma fragment shadowFrag
-        //    ENDCG
-        //}
-
         Pass
         {
             Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
-            //Blend SrcAlpha OneMinusSrcAlpha
+
+            Cull Front
+            Stencil
+            {
+                Ref 0
+                Comp always
+                ZFail IncrWrap
+            }
+            ColorMask 0
 
             CGPROGRAM
             #pragma vertex vert
@@ -486,6 +429,62 @@ Shader "Unlit/ShadowVolumeObjects"
             #pragma fragment shadowFrag
             ENDCG
         }
+        // Shadow pass 2
+        Pass
+        {
+            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            LOD 100
+
+            Cull Back
+            Stencil
+            {
+                Ref 0
+                Comp always
+                ZFail DecrWrap
+            }
+
+            ColorMask 0
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma geometry shadowGeom
+            #pragma fragment shadowFrag
+            ENDCG
+        }
+        // Shadow Pass 3 - show the image
+        Pass
+        {
+            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            LOD 100
+
+            Cull Back
+            Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+            }
+
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma geometry shadowGeom
+            #pragma fragment shadowFrag
+            ENDCG
+        }
+
+        //Pass
+        //{
+        //    Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+        //    LOD 100
+        //    Blend SrcAlpha OneMinusSrcAlpha
+//
+        //    CGPROGRAM
+        //    #pragma vertex vert
+        //    #pragma geometry shadowGeom
+        //    #pragma fragment shadowFrag
+        //    ENDCG
+        //}
     }
 }
 // shader basics learned from: https://www.youtube.com/watch?v=4XfXOEDzBx4&ab_channel=WorldofZero
