@@ -465,12 +465,40 @@ Shader "Unlit/ShadowVolumeObjects"
             //    Comp equal 
             //}
 
+            GLSLPROGRAM
+            // Vertex Shader
+            #ifdef VERTEX 
 
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma geometry shadowGeom
-            #pragma fragment shadowFrag
-            ENDCG
+            void main() 
+            {
+                gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+            }
+            #endif
+            
+            // Geometry shader
+            #ifdef GEOMETRY
+                layout(triangles) in;
+                layout(triangle_strip, max_vertices=24) out;
+                void main()
+                {
+                    for(int i=0; i<3; i++)
+                    {
+                        gl_Position = gl_in[i].gl_Position + vec4(1,-1,1,1);
+                        EmitVertex();
+                    }
+                    EndPrimitive();
+                } 
+            #endif
+
+            // Fragment shader
+            #ifdef FRAGMENT 
+            uniform vec4 _ShadowColor;
+            void main() 
+            {
+                gl_FragColor = _ShadowColor; 
+            }
+            #endif 
+            ENDGLSL
         }
 
         //Pass
