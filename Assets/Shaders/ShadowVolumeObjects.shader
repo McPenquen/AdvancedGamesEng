@@ -457,13 +457,13 @@ Shader "Unlit/ShadowVolumeObjects"
             Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
 
-            Cull Back
+            //Cull Back
             Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref 1
-                Comp equal 
-            }
+            //Stencil
+            //{
+            //    Ref 1
+            //    Comp equal 
+            //}
 
 
             CGPROGRAM
