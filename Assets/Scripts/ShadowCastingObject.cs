@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine;
 
 // Struct with the Adj Triangles for shader
@@ -40,6 +39,15 @@ public class ShadowCastingObject : MonoBehaviour
             (meshComponent.triangles.Length / 3) * 6, AdjTriangles.GetSize()
             );
         UpdateAdjTrianglesBuffer();
+        int p = 0;
+        if (gameObject.name == "Obstacle (1)")
+        {
+            foreach(int v in meshComponent.triangles)
+            {
+                p += 1;
+                Debug.Log( p+ ": " + v);
+            }
+        }
     }
 
     void Update()
@@ -56,20 +64,56 @@ public class ShadowCastingObject : MonoBehaviour
     }
     private void UpdateAdjTrianglesBuffer()
     {
+        // First find and assign all adj triangle groups
+        // first [] indicates the adj triangle group, second [] has the 6 different vertices 
+        Vector4[][] adjTriangleFinderList = new Vector4[(meshComponent.triangles.Length / 3)][];
+        
+        int meshTrianglesIndex = 0;
+
+        // First create the empty setup to iterate through later
+        for (int i = 0; i < (meshComponent.triangles.Length / 3); i++)
+        {
+            adjTriangleFinderList[i] = new Vector4[6];
+            for (int j = 0; j < 6; j++)
+            {
+                // 0, 2 and 4 are the central indices - the main triangle
+               if (j % 2 == 0)
+               {
+                    adjTriangleFinderList[i][j] = meshComponent.vertices[meshComponent.triangles[meshTrianglesIndex]];
+                    // Setting w to 1 marks it as a valid vertex
+                    adjTriangleFinderList[i][j].w = 1;
+                    meshTrianglesIndex++;
+               }
+               else
+               {
+                    adjTriangleFinderList[i][j] = new Vector4(-1,-1,-1,-1);
+               } 
+            }
+        }
+
+        // Now assign the adj triangles to the core triangles
+        for (int i = 0; i < (meshComponent.triangles.Length / 3); i++)
+        {
+            for (int j = 0; i < 6; j++)
+            {
+               adjTriangleFinderList[i][j] = new Vector4(-1,-1,-1,-1);
+            }
+        }
+
         // Create an array that then will sent the data to the buffer
         AdjTriangles[] adjTrianglesArray = new AdjTriangles[(meshComponent.triangles.Length / 3)];
 
-        // For each triangle in the mesh update the buffer info element
+        // Iterate through the array of arrays and assign all to the list
         for (int i = 0; i < (meshComponent.triangles.Length / 3); i++)
         {
             AdjTriangles newTri = new AdjTriangles()
             {
-                vertex1 = new Vector4(0,0,0,0),
-                vertex2 = new Vector4(0,0,0,0),
-                vertex3 = new Vector4(0,0,0,0),
-                vertex4 = new Vector4(0,0,0,0),
-                vertex5 = new Vector4(0,0,0,0),
-                vertex6 = new Vector4(0,0,0,0),
+                vertex1 = adjTriangleFinderList[i][0],
+                vertex2 = adjTriangleFinderList[i][1],
+                vertex3 = adjTriangleFinderList[i][2],
+                vertex4 = adjTriangleFinderList[i][3],
+                vertex5 = adjTriangleFinderList[i][4],
+                vertex6 = adjTriangleFinderList[i][5]
             };
 
             // Add the adj triangles to the array

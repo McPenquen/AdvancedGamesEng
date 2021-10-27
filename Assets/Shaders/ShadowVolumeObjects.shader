@@ -79,7 +79,7 @@ Shader "Unlit/ShadowVolumeObjects"
             {
                 // Buffer access test
                 float4 flop = adjTriangles[0].vertex1;
-                
+
                 g2f o;
                 for (int i = 0; i < 3; i++)
                 {
