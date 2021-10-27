@@ -39,18 +39,6 @@ public class ShadowCastingObject : MonoBehaviour
             (meshComponent.triangles.Length / 3) * 6, AdjTriangles.GetSize()
             );
         UpdateAdjTrianglesBuffer();
-        /*
-        int p = 0;
-        if (gameObject.name == "Obstacle (1)")
-        {
-            Debug.Log( meshComponent.vertexCount);
-            foreach(int v in meshComponent.triangles)
-            {
-                p += 1;
-                Debug.Log( p+ ": " + v);
-            }
-        }
-        */
     }
 
     void Update()
@@ -129,7 +117,7 @@ public class ShadowCastingObject : MonoBehaviour
                         {
                             // Skip 0s
                             if (emptyAdjVertices[q] == 0) { continue; }
-                            
+
                             int i0 = emptyAdjVertices[q]-1;
                             int i1 = (emptyAdjVertices[q]+1) % 6;
                             // If two of the vertices are the same for both triangle we have a match
@@ -153,9 +141,6 @@ public class ShadowCastingObject : MonoBehaviour
 
         // Create an array that then will sent the data to the buffer
         AdjTriangles[] adjTrianglesArray = new AdjTriangles[(meshComponent.triangles.Length / 3)];
-
-        Debug.Log(adjTriangleFinderList.Length);
-        Debug.Log((meshComponent.triangles.Length / 3));
 
         // Iterate through the array of arrays and assign all to the list
         for (int i = 0; i < (meshComponent.triangles.Length / 3); i++)
