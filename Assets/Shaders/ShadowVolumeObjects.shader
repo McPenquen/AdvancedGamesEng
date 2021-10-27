@@ -77,9 +77,6 @@ Shader "Unlit/ShadowVolumeObjects"
             [maxvertexcount(3)]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
-                // Buffer access test
-                float4 flop = adjTriangles[0].vertex1;
-
                 g2f o;
                 for (int i = 0; i < 3; i++)
                 {
@@ -104,7 +101,14 @@ Shader "Unlit/ShadowVolumeObjects"
                 // Back cap vertices
                 float4 backCap[3];
                 // Centroid of the front cap
-                float4 frontCentroid = (0,0,0,0); 
+                float4 frontCentroid = (0,0,0,0);
+
+                // To the light directions
+                float3 ttlds[3];
+                // Triangle normals
+                float3 tns[3];
+                // If the main triangle is oriented towards light
+                bool isFacingLight = true; 
 
                 // Vertex to be generated
                 fixed4 vert;
@@ -118,55 +122,107 @@ Shader "Unlit/ShadowVolumeObjects"
                 // The object to retur
                 sg2f o;
 
-                // First the front cap
+                // Calculate normals for each vertex
+                tns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
+                tns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
+                tns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
+
+                // Compute direction from vertices to light
+                ttlds[0] = _LightSourcePosition - input[0].worldPosition;
+                ttlds[1] = _LightSourcePosition - input[1].worldPosition;
+                ttlds[2] = _LightSourcePosition - input[2].worldPosition;
+
+                // Find out if the triangle faces light
+                if (!(dot(tns[0], ttlds[0]) > 0 || dot(tns[1], ttlds[1]) > 0 || dot(tns[2], ttlds[2]) > 0 ))
+                //if ((dot(tns[0], ttlds[0]) < 0))
+                {
+                    isFacingLight = false;
+                    // Switch the vertices so it faves away from light
+                    frontCap[1] = input[2].vertex;
+                    frontCap[2] = input[1].vertex;
+                }
+
+                // Save the front cap vertices
                 for (int i = 0; i < 3; i++)
                 {
-                    vert = input[i].vertex;
-                    frontCap[i] = vert;
-                    o.vertex = UnityObjectToClipPos(vert);
-                    //triStream.Append(o);
+                    frontCap[i] = input[i].vertex;
                 }
 
                 // Get the distance to light for all verices
-                fixed toLightDistance = length(_LightSourcePosition - input[0].worldPosition);
-                fixed toLightDistance2 = length(_LightSourcePosition - input[1].worldPosition);
-                fixed toLightDistance3 = length(_LightSourcePosition - input[2].worldPosition);
+                fixed toLightDistance0 = length(_LightSourcePosition - input[0].worldPosition);
+                fixed toLightDistance1 = length(_LightSourcePosition - input[1].worldPosition);
+                fixed toLightDistance2 = length(_LightSourcePosition - input[2].worldPosition);
                 // Cast shadows only if we have all vertices within the radius of the light
-                castShadows = (_LightSourceRadius - toLightDistance) > 0 && 
-                    (_LightSourceRadius - toLightDistance2) > 0 &&
-                    (_LightSourceRadius - toLightDistance3) > 0;
+                castShadows = (_LightSourceRadius - toLightDistance0) > 0 && 
+                    (_LightSourceRadius - toLightDistance1) > 0 &&
+                    (_LightSourceRadius - toLightDistance2) > 0;
 
                 // Cast shadows only if it is within the light's radius
                 if (castShadows)
                 {
-                    // Create the front cap only if we are casting shadows
+                    // First the front cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        vert = frontCap[i];
+                        o.vertex = UnityObjectToClipPos(vert);
+                        //triStream.Append(o);
+                    }
                     //triStream.RestartStrip();
 
                     // Calculate centroid of the front cap triangle
                     frontCentroid.x = (frontCap[0].x + frontCap[1].x + frontCap[2].x) / 3;
                     frontCentroid.y = (frontCap[0].y + frontCap[1].y + frontCap[2].y) / 3;
-                    frontCentroid.x = (frontCap[0].z + frontCap[1].z + frontCap[2].z) / 3;
+                    frontCentroid.z = (frontCap[0].z + frontCap[1].z + frontCap[2].z) / 3;
 
                     // Then the back cap
                     for (int i = 0; i < 3; i++)
                     {
+                        // World position
+                        fixed3 worldPos = input[i].worldPosition;
+                        if (i > 0 && !isFacingLight) // correct the world pos based on light facing
+                        {
+                            worldPos = i == 1 ? input[2].worldPosition : input[1].worldPosition; 
+                        }
+
                         // Get the distance to light
-                        fixed toLightDistance = length(_LightSourcePosition - input[i].worldPosition);
+                        fixed toLightDistance = length(_LightSourcePosition - worldPos);
                         // Calculate the displacement of the shadow vertices 
                         fixed shadowBackCapDisplacement = _LightSourceRadius - toLightDistance;
 
-                        vert = input[i].vertex;
-                        fixed3 toLightDirection = normalize(input[i].worldPosition - _LightSourcePosition.xyz);
+                        vert = frontCap[i];
+                        fixed3 toLightDirection = normalize(worldPos - _LightSourcePosition.xyz);
 
                         vert.x = vert.x + toLightDirection.x * (_LightSourceRadius - toLightDistance);
                         vert.y = vert.y + toLightDirection.y * (_LightSourceRadius - toLightDistance);
                         vert.z = vert.z + toLightDirection.z * (_LightSourceRadius - toLightDistance);
 
                         backCap[i] = vert;
-
-                        o.vertex = UnityObjectToClipPos(vert);
+                    }
+                    // Generate the far/back cap away from the light
+                    if (isFacingLight)
+                    {
+                        o.vertex = UnityObjectToClipPos(backCap[0]);
                         triStream.Append(o);
-                        
+                        o.vertex = UnityObjectToClipPos(backCap[2]);
+                        triStream.Append(o);
+                        o.vertex = UnityObjectToClipPos(backCap[1]);
+                        triStream.Append(o);
+                    }
+                    else
+                    {
+                        o.vertex = UnityObjectToClipPos(backCap[0]);
+                        triStream.Append(o);
+                        o.vertex = UnityObjectToClipPos(backCap[1]);
+                        triStream.Append(o);
+                        o.vertex = UnityObjectToClipPos(backCap[2]);
+                        triStream.Append(o);
+                    }
+
+                    // Now generate the back cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        o.vertex = UnityObjectToClipPos(backCap[i]);
+                        triStream.Append(o);
                     }
                     triStream.RestartStrip();
 
