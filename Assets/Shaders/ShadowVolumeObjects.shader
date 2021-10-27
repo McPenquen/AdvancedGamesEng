@@ -9,6 +9,7 @@ Shader "Unlit/ShadowVolumeObjects"
         _LightSourcePower ("Light source power", Float) = 10 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _ShadowBias ("Shadow volume bias", Float) = 0.01 
+        _MeshTrianglesNumber ("Number of triangles in the mesh", Int) = 6
     }
     SubShader
     {
@@ -60,6 +61,7 @@ Shader "Unlit/ShadowVolumeObjects"
             fixed _LightSourceRadius;
             fixed _LightSourcePower;
             fixed _ShadowBias;
+            int _MeshTrianglesNumber;
 
             StructuredBuffer<adjTrianglesStruct> adjTriangles;
 
@@ -217,6 +219,35 @@ Shader "Unlit/ShadowVolumeObjects"
                     }
                     triStream.RestartStrip();
 
+                    // Primitive Index in adj triangles
+                    int primitiveIdx = -1;
+                    // Find the index in all the adj triangles
+                    for (int j = 0; j < _MeshTrianglesNumber; j++)
+                    {
+                        // TODO PROBLEMS
+                        if (all(adjTriangles[j].vertex1 == frontCap[0]) ||
+                            all(adjTriangles[j].vertex3 == frontCap[0]) ||
+                            all(adjTriangles[j].vertex5 == frontCap[0]) ||
+                        )
+                        {
+                            if (all(adjTriangles[j].vertex1 == frontCap[1]) ||
+                                all(adjTriangles[j].vertex3 == frontCap[1]) ||
+                                all(adjTriangles[j].vertex5 == frontCap[1]) ||
+                            )
+                            {
+                                if (all(adjTriangles[j].vertex1 == frontCap[2]) ||
+                                    all(adjTriangles[j].vertex3 == frontCap[2]) ||
+                                    all(adjTriangles[j].vertex5 == frontCap[2]) ||
+                                )
+                                {
+                                    // If the 3 central vertices are these three front cap vertices we found the id
+                                    primitiveIdx = j;
+                                    break;      
+                                }
+                            }
+                        }
+                    }
+
                     // Loop over the edges and connect the back and front cap
                     for (int i = 0; i < 3; i++)
                     {
@@ -238,61 +269,68 @@ Shader "Unlit/ShadowVolumeObjects"
                             v2 = 1;
                         }
 
-                        // Triangle 1 vertices
-                        vert1 = frontCap[v0];
-                        vert2 = frontCap[v1];
-                        vert3 = backCap[v0];
+                        // If the triangles should be created
+                        bool createWall = false;
 
-                        // Calculate the normal
-                        normal = cross(vert2 - vert1, vert3 - vert1);
-                        // The direction from the centroid to one of the vertices
-                        tempVec = frontCap[v0] - frontCentroid;
-                        // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
-                        if (dot(normal, tempVec) < 0)
+
+                        if (false)
                         {
-                            vert2 = backCap[v0];
-                            vert3 = frontCap[v1];
-                        }
-
-                        // Triangle 1 from the front cap
-                        o.vertex = UnityObjectToClipPos(vert1);
-                        triStream.Append(o);
-
-                        o.vertex = UnityObjectToClipPos(vert2);
-                        triStream.Append(o);
-
-                        o.vertex = UnityObjectToClipPos(vert3);
-                        triStream.Append(o); 
-
-                        triStream.RestartStrip();
-
-                        // Triangle 2 vertices
-                        vert1 = backCap[v0];
-                        vert2 = backCap[v1];
-                        vert3 = frontCap[v1];
-
-                        // Calculate the normal
-                        normal = cross(vert2 - vert1, vert3 - vert1);
-                        // The direction from the centroid to one of the vertices
-                        tempVec = frontCap[v1] - frontCentroid;
-                        // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
-                        if (dot(normal, tempVec) < 0)
-                        {
+                            // Triangle 1 vertices
+                            vert1 = frontCap[v0];
                             vert2 = frontCap[v1];
-                            vert3 = backCap[v1];
+                            vert3 = backCap[v0];
+
+                            // Calculate the normal
+                            normal = cross(vert2 - vert1, vert3 - vert1);
+                            // The direction from the centroid to one of the vertices
+                            tempVec = frontCap[v0] - frontCentroid;
+                            // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
+                            if (dot(normal, tempVec) < 0)
+                            {
+                                vert2 = backCap[v0];
+                                vert3 = frontCap[v1];
+                            }
+
+                            // Triangle 1 from the front cap
+                            o.vertex = UnityObjectToClipPos(vert1);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert2);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert3);
+                            triStream.Append(o); 
+
+                            triStream.RestartStrip();
+
+                            // Triangle 2 vertices
+                            vert1 = backCap[v0];
+                            vert2 = backCap[v1];
+                            vert3 = frontCap[v1];
+
+                            // Calculate the normal
+                            normal = cross(vert2 - vert1, vert3 - vert1);
+                            // The direction from the centroid to one of the vertices
+                            tempVec = frontCap[v1] - frontCentroid;
+                            // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
+                            if (dot(normal, tempVec) < 0)
+                            {
+                                vert2 = frontCap[v1];
+                                vert3 = backCap[v1];
+                            }
+        
+                            // Triangle 2 from the back cap
+                            o.vertex = UnityObjectToClipPos(vert1);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert2);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert3);
+                            triStream.Append(o);    
+
+                            triStream.RestartStrip(); 
                         }
-    
-                        // Triangle 2 from the back cap
-                        o.vertex = UnityObjectToClipPos(vert1);
-                        triStream.Append(o);
-
-                        o.vertex = UnityObjectToClipPos(vert2);
-                        triStream.Append(o);
-
-                        o.vertex = UnityObjectToClipPos(vert3);
-                        triStream.Append(o);    
-
-                        triStream.RestartStrip(); 
                     }
                 }
             }

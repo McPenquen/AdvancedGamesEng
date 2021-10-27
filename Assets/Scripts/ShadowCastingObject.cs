@@ -39,6 +39,8 @@ public class ShadowCastingObject : MonoBehaviour
             (meshComponent.triangles.Length / 3) * 6, AdjTriangles.GetSize()
             );
         UpdateAdjTrianglesBuffer();
+        // Save the number of triangles
+        renderer.material.SetInt("_MeshTrianglesNumber", (meshComponent.triangles.Length / 3));
     }
 
     void Update()
