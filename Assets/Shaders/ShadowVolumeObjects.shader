@@ -9,7 +9,6 @@ Shader "Unlit/ShadowVolumeObjects"
         _LightSourcePower ("Light source power", Float) = 10 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _ShadowBias ("Shadow volume bias", Float) = 0.01 
-        _ObjectCenter ("The object center's world location", Vector) = (0,0,0,0) 
     }
     SubShader
     {
@@ -43,6 +42,15 @@ Shader "Unlit/ShadowVolumeObjects"
             {
                 float4 vertex : SV_POSITION;
             };
+            struct adjTrianglesStruct
+            {
+               float4 vertex1;
+               float4 vertex2;
+               float4 vertex3;
+               float4 vertex4;
+               float4 vertex5;
+               float4 vertex6;
+            };
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
@@ -52,7 +60,8 @@ Shader "Unlit/ShadowVolumeObjects"
             fixed _LightSourceRadius;
             fixed _LightSourcePower;
             fixed _ShadowBias;
-            fixed3 _ObjectCenter;
+
+            StructuredBuffer<adjTrianglesStruct> adjTriangles;
 
             // The vertex shader
             v2g vert (appdata v)
@@ -68,6 +77,9 @@ Shader "Unlit/ShadowVolumeObjects"
             [maxvertexcount(3)]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
+                // Buffer access test
+                float4 flop = adjTriangles[0].vertex1;
+                
                 g2f o;
                 for (int i = 0; i < 3; i++)
                 {
