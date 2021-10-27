@@ -132,20 +132,18 @@ Shader "Unlit/ShadowVolumeObjects"
                 ttlds[1] = _LightSourcePosition - input[1].worldPosition;
                 ttlds[2] = _LightSourcePosition - input[2].worldPosition;
 
+                // Save the front cap vertices
+                for (int i = 0; i < 3; i++)
+                {
+                    frontCap[i] = input[i].vertex;
+                }
                 // Find out if the triangle faces light
                 if (!(dot(tns[0], ttlds[0]) > 0 || dot(tns[1], ttlds[1]) > 0 || dot(tns[2], ttlds[2]) > 0 ))
-                //if ((dot(tns[0], ttlds[0]) < 0))
                 {
                     isFacingLight = false;
                     // Switch the vertices so it faves away from light
                     frontCap[1] = input[2].vertex;
                     frontCap[2] = input[1].vertex;
-                }
-
-                // Save the front cap vertices
-                for (int i = 0; i < 3; i++)
-                {
-                    frontCap[i] = input[i].vertex;
                 }
 
                 // Get the distance to light for all verices
@@ -215,13 +213,6 @@ Shader "Unlit/ShadowVolumeObjects"
                         o.vertex = UnityObjectToClipPos(backCap[1]);
                         triStream.Append(o);
                         o.vertex = UnityObjectToClipPos(backCap[2]);
-                        triStream.Append(o);
-                    }
-
-                    // Now generate the back cap
-                    for (int i = 0; i < 3; i++)
-                    {
-                        o.vertex = UnityObjectToClipPos(backCap[i]);
                         triStream.Append(o);
                     }
                     triStream.RestartStrip();
