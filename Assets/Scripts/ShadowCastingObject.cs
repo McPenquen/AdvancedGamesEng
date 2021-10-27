@@ -42,6 +42,7 @@ public class ShadowCastingObject : MonoBehaviour
         int p = 0;
         if (gameObject.name == "Obstacle (1)")
         {
+            Debug.Log( meshComponent.vertexCount);
             foreach(int v in meshComponent.triangles)
             {
                 p += 1;
@@ -59,7 +60,7 @@ public class ShadowCastingObject : MonoBehaviour
         // If the object has moved update the buffer for the shader
         if (isMoving)
         {
-            UpdateAdjTrianglesBuffer();
+            //UpdateAdjTrianglesBuffer();
         }
     }
     private void UpdateAdjTrianglesBuffer()
@@ -91,17 +92,24 @@ public class ShadowCastingObject : MonoBehaviour
             }
         }
 
-        // Now assign the adj triangles to the core triangles
+        // Now each vertex can find all places it can belong to
         for (int i = 0; i < (meshComponent.triangles.Length / 3); i++)
         {
             for (int j = 0; i < 6; j++)
             {
-               adjTriangleFinderList[i][j] = new Vector4(-1,-1,-1,-1);
+                // Only the adj triangles - 1, 3 and 5, and only if it isn't set yet
+                if (j % 2 == 1)
+                {
+                   //adjTriangleFinderList[i][j] = new Vector4(-1,-1,-1,-1); 
+                }   
             }
         }
-
+/*
         // Create an array that then will sent the data to the buffer
         AdjTriangles[] adjTrianglesArray = new AdjTriangles[(meshComponent.triangles.Length / 3)];
+
+        Debug.Log(adjTriangleFinderList.Length);
+        Debug.Log((meshComponent.triangles.Length / 3));
 
         // Iterate through the array of arrays and assign all to the list
         for (int i = 0; i < (meshComponent.triangles.Length / 3); i++)
@@ -124,6 +132,7 @@ public class ShadowCastingObject : MonoBehaviour
 
         // Send the buffer to the material
         renderer.material.SetBuffer("adjTriangles", adjTrianglesBuffer);
+*/
     }
     private void OnDisable()
     {
