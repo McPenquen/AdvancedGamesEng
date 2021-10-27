@@ -39,6 +39,7 @@ public class ShadowCastingObject : MonoBehaviour
             (meshComponent.triangles.Length / 3) * 6, AdjTriangles.GetSize()
             );
         UpdateAdjTrianglesBuffer();
+        /*
         int p = 0;
         if (gameObject.name == "Obstacle (1)")
         {
@@ -49,6 +50,7 @@ public class ShadowCastingObject : MonoBehaviour
                 Debug.Log( p+ ": " + v);
             }
         }
+        */
     }
 
     void Update()
@@ -92,19 +94,63 @@ public class ShadowCastingObject : MonoBehaviour
             }
         }
 
-        // Now each vertex can find all places it can belong to
-        for (int i = 0; i < (meshComponent.triangles.Length / 3); i++)
+        // Now each triangle will try to fill its adj vertices
+        for (int m = 0; m < adjTriangleFinderList.Length; m++)
         {
-            for (int j = 0; i < 6; j++)
+            int[] emptyAdjVertices = {0,0,0};
+            int idCounter = 0;
+            // Count how many vertices to find a match to
+            for (int o = 1; o < adjTriangleFinderList[m].Length; o=o+2)
             {
-                // Only the adj triangles - 1, 3 and 5, and only if it isn't set yet
-                if (j % 2 == 1)
+                if (adjTriangleFinderList[m][o].w == -1)
                 {
-                   //adjTriangleFinderList[i][j] = new Vector4(-1,-1,-1,-1); 
-                }   
+                    emptyAdjVertices[idCounter] = o;
+                }
+                idCounter++;
+            }
+            for (int n = 0; n < adjTriangleFinderList.Length; n++)
+            {
+                // If all vertices are set continue to the next triangle
+                if (emptyAdjVertices[0] == 0 && emptyAdjVertices[1] == 0 && emptyAdjVertices[2] == 0)
+                {
+                    continue;
+                }
+                // Skip if it is the same triangle
+                if (m != n)
+                {
+                    // Attempt to find 2 of the same vertices
+                    for (int p = 1; p < adjTriangleFinderList[n].Length; p=p+2)
+                    {
+                        int frstIndex = p-1; 
+                        int scndIndex = (p+1) % 6; // indx of 6 is = 0
+                        Vector4 v1 = adjTriangleFinderList[n][frstIndex];
+                        Vector4 v2 = adjTriangleFinderList[n][scndIndex];
+                        for (int q = 0; q < emptyAdjVertices.Length; q++)
+                        {
+                            // Skip 0s
+                            if (emptyAdjVertices[q] == 0) { continue; }
+                            
+                            int i0 = emptyAdjVertices[q]-1;
+                            int i1 = (emptyAdjVertices[q]+1) % 6;
+                            // If two of the vertices are the same for both triangle we have a match
+                            if ((adjTriangleFinderList[m][i0] == v1 && adjTriangleFinderList[m][i1] == v2) || 
+                                (adjTriangleFinderList[m][i0] == v2 && adjTriangleFinderList[m][i1] == v1) // Just to be sure check them interchangeably 
+                            )
+                            {
+                                // The unused vertex from the other 6vertices belongs to the empty spot
+                                int mIndex = (i1 + 2) % 6;
+                                int nIndex = (scndIndex + 2) % 6;
+                                adjTriangleFinderList[m][emptyAdjVertices[q]] = adjTriangleFinderList[n][nIndex];
+                                adjTriangleFinderList[n][p] = adjTriangleFinderList[m][mIndex];
+                                emptyAdjVertices[q] = 0;
+                            }
+                        }
+
+                    }
+                }
             }
         }
-/*
+
         // Create an array that then will sent the data to the buffer
         AdjTriangles[] adjTrianglesArray = new AdjTriangles[(meshComponent.triangles.Length / 3)];
 
@@ -132,7 +178,7 @@ public class ShadowCastingObject : MonoBehaviour
 
         // Send the buffer to the material
         renderer.material.SetBuffer("adjTriangles", adjTrianglesBuffer);
-*/
+
     }
     private void OnDisable()
     {
