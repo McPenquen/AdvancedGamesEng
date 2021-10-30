@@ -106,9 +106,9 @@ Shader "Unlit/ShadowVolumeObjects"
                 float4 frontCentroid = (0,0,0,0);
 
                 // To the light directions
-                float3 ttlds[3];
+                float3 lds[3];
                 // Triangle normals
-                float3 tns[3];
+                float3 ns[3];
                 // If the main triangle is oriented towards light
                 bool isFacingLight = true; 
 
@@ -125,14 +125,14 @@ Shader "Unlit/ShadowVolumeObjects"
                 sg2f o;
 
                 // Calculate normals for each vertex
-                tns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
-                tns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
-                tns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
+                ns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
+                ns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
+                ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
 
                 // Compute direction from vertices to light
-                ttlds[0] = _LightSourcePosition - input[0].worldPosition;
-                ttlds[1] = _LightSourcePosition - input[1].worldPosition;
-                ttlds[2] = _LightSourcePosition - input[2].worldPosition;
+                lds[0] = _LightSourcePosition - input[0].worldPosition;
+                lds[1] = _LightSourcePosition - input[1].worldPosition;
+                lds[2] = _LightSourcePosition - input[2].worldPosition;
 
                 // Save the front cap vertices
                 for (int i = 0; i < 3; i++)
@@ -140,7 +140,7 @@ Shader "Unlit/ShadowVolumeObjects"
                     frontCap[i] = input[i].vertex;
                 }
                 // Find out if the triangle faces light
-                if (!(dot(tns[0], ttlds[0]) > 0 || dot(tns[1], ttlds[1]) > 0 || dot(tns[2], ttlds[2]) > 0 ))
+                if (!(dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 ))
                 {
                     isFacingLight = false;
                     // Switch the vertices so it faves away from light
@@ -199,7 +199,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         backCap[i] = vert;
                     }
                     // Generate the far/back cap away from the light
-                    if (isFacingLight)
+                    if (isFacingLight) // Only for the vertices facing light
                     {
                         o.vertex = UnityObjectToClipPos(backCap[0]);
                         triStream.Append(o);
