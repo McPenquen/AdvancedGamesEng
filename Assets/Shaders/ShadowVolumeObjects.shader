@@ -166,9 +166,16 @@ Shader "Unlit/ShadowVolumeObjects"
                     {
                         vert = frontCap[i];
                         o.vertex = UnityObjectToClipPos(vert);
-                        //triStream.Append(o);
+                        if (!isFacingLight)
+                        {
+                            triStream.Append(o);
+                        }
                     }
-                    //triStream.RestartStrip();
+                    if (!isFacingLight)
+                    {
+                        triStream.RestartStrip();
+                    }
+                    
 
                     // Calculate centroid of the front cap triangle
                     frontCentroid.x = (frontCap[0].x + frontCap[1].x + frontCap[2].x) / 3;
@@ -458,7 +465,7 @@ Shader "Unlit/ShadowVolumeObjects"
             Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
 
-            //Cull Back
+            Cull Back
             Blend SrcAlpha OneMinusSrcAlpha
             //Stencil
             //{
