@@ -267,43 +267,57 @@ Shader "Unlit/ShadowVolumeObjects"
                     for (int i = 0; i < 3; i++)
                     {
                         // Find neighbour indeces for this triangle
-                        int v0 = i;
-                        int v1 = (i)+1;
-                        int v2 = (i)+2;
+                        int v0 = i*2;
+                        int extraV = (i*2)+1;
+                        int v2 = (i*2+2) % 6;
+                        // Find the indecies for the front and back cap arrays
+                        int fb0 = i;
+                        int fb1 = i+1;
+                        int fb2 = i+2;
 
                         if (i == 1)
                         {
-                            v0 = 1;
-                            v1 = 2;
-                            v2 = 0;
+                            fb0 = 1;
+                            fb1 = 2;
+                            fb2 = 0;
                         }
                         else if (i == 2)
                         {
-                            v0 = 2;
-                            v1 = 0;
-                            v2 = 1;
+                            fb0 = 2;
+                            fb1 = 0;
+                            fb2 = 1;
                         }
 
-                        // If the triangles should be created
-                        bool createWall = false;
+                        // Calculate normals for each adj triangle
+                        ns[0] = cross(sixVertices[extraV].xyz - sixVertices[v0].xyz, sixVertices[v2].xyz - sixVertices[v0].xyz);
+                        ns[1] = cross(sixVertices[v2].xyz - sixVertices[extraV].xyz, sixVertices[v0].xyz - sixVertices[extraV].xyz);
+                        ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
 
+                        // Compute direction from vertices to light
+                        lds[0] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
+                        lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
+                        lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
 
-                        if (createWall)
+                        // If the w==-1 the extraV isn't assigned and so it is the edge,
+                        // or if the new triangle changes that it faces light, then it is an edge too
+                        if (sixVertices[extraV].w == -1 || 
+                            isFacingLight != (dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 )
+                        )
                         {
                             // Triangle 1 vertices
-                            vert1 = frontCap[v0];
-                            vert2 = frontCap[v1];
-                            vert3 = backCap[v0];
+                            vert1 = frontCap[fb0];
+                            vert2 = frontCap[fb1];
+                            vert3 = backCap[fb0];
 
                             // Calculate the normal
                             normal = cross(vert2 - vert1, vert3 - vert1);
                             // The direction from the centroid to one of the vertices
-                            tempVec = frontCap[v0] - frontCentroid;
+                            tempVec = frontCap[fb0] - frontCentroid;
                             // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
                             if (dot(normal, tempVec) < 0)
                             {
-                                vert2 = backCap[v0];
-                                vert3 = frontCap[v1];
+                                vert2 = backCap[fb0];
+                                vert3 = frontCap[fb1];
                             }
 
                             // Triangle 1 from the front cap
@@ -319,19 +333,19 @@ Shader "Unlit/ShadowVolumeObjects"
                             triStream.RestartStrip();
 
                             // Triangle 2 vertices
-                            vert1 = backCap[v0];
-                            vert2 = backCap[v1];
-                            vert3 = frontCap[v1];
+                            vert1 = backCap[fb0];
+                            vert2 = backCap[fb1];
+                            vert3 = frontCap[fb1];
 
                             // Calculate the normal
                             normal = cross(vert2 - vert1, vert3 - vert1);
                             // The direction from the centroid to one of the vertices
-                            tempVec = frontCap[v1] - frontCentroid;
+                            tempVec = frontCap[fb1] - frontCentroid;
                             // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
                             if (dot(normal, tempVec) < 0)
                             {
-                                vert2 = frontCap[v1];
-                                vert3 = backCap[v1];
+                                vert2 = frontCap[fb1];
+                                vert3 = backCap[fb1];
                             }
         
                             // Triangle 2 from the back cap
