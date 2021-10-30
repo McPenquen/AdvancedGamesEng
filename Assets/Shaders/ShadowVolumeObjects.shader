@@ -140,7 +140,8 @@ Shader "Unlit/ShadowVolumeObjects"
                     frontCap[i] = input[i].vertex;
                 }
                 // Find out if the triangle faces light
-                if (!(dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 ))
+                //if (!(dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 ))
+                if (dot(ns[0], lds[0]) < 0)
                 {
                     isFacingLight = false;
                     // Switch the vertices so it faves away from light
@@ -178,11 +179,7 @@ Shader "Unlit/ShadowVolumeObjects"
                     for (int i = 0; i < 3; i++)
                     {
                         // World position
-                        fixed3 worldPos = input[i].worldPosition;
-                        if (i > 0 && !isFacingLight) // correct the world pos based on light facing
-                        {
-                            worldPos = i == 1 ? input[2].worldPosition : input[1].worldPosition; 
-                        }
+                        fixed3 worldPos = mul(unity_ObjectToWorld, frontCap[i]).xyz;
 
                         // Get the distance to light
                         fixed toLightDistance = length(_LightSourcePosition - worldPos);
@@ -271,21 +268,26 @@ Shader "Unlit/ShadowVolumeObjects"
                         int extraV = (i*2)+1;
                         int v2 = (i*2+2) % 6;
                         // Find the indecies for the front and back cap arrays
-                        int fb0 = i;
-                        int fb1 = i+1;
-                        int fb2 = i+2;
+                        int fb0 = -1;
+                        int fb1 = -1;
+                        bool3 isIt; // check for vec3
 
-                        if (i == 1)
-                        {
-                            fb0 = 1;
-                            fb1 = 2;
-                            fb2 = 0;
+                        for (int j = 0; j < 3; j++)
+                        { 
+                            isIt = sixVertices[v0].xyz == frontCap[j].xyz;
+                            if (all(isIt))
+                            {
+                                fb0 = j;
+                            }
                         }
-                        else if (i == 2)
-                        {
-                            fb0 = 2;
-                            fb1 = 0;
-                            fb2 = 1;
+
+                        for (int j = 0; j < 3; j++)
+                        { 
+                            isIt = sixVertices[v2].xyz == frontCap[j].xyz;
+                            if (all(isIt))
+                            {
+                                fb1 = j;
+                            }
                         }
 
                         // Calculate normals for each adj triangle
@@ -301,7 +303,8 @@ Shader "Unlit/ShadowVolumeObjects"
                         // If the w==-1 the extraV isn't assigned and so it is the edge,
                         // or if the new triangle changes that it faces light, then it is an edge too
                         if (sixVertices[extraV].w == -1 || 
-                            isFacingLight != (dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 )
+                            isFacingLight != (dot(ns[0], lds[0]) > 0)
+                            //isFacingLight != (dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 )
                         )
                         {
                             // Triangle 1 vertices
