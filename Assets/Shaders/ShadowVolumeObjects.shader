@@ -207,38 +207,41 @@ Shader "Unlit/ShadowVolumeObjects"
                         triStream.Append(o);
                         o.vertex = UnityObjectToClipPos(backCap[1]);
                         triStream.Append(o);
+                        triStream.RestartStrip();
                     }
                     else
                     {
-                        o.vertex = UnityObjectToClipPos(backCap[0]);
-                        triStream.Append(o);
-                        o.vertex = UnityObjectToClipPos(backCap[1]);
-                        triStream.Append(o);
-                        o.vertex = UnityObjectToClipPos(backCap[2]);
-                        triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[0]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[1]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[2]);
+                        //triStream.Append(o);
+                        //triStream.RestartStrip();
                     }
-                    triStream.RestartStrip();
 
                     // Primitive Index in adj triangles
                     int primitiveIdx = -1;
                     // Find the index in all the adj triangles
                     for (int j = 0; j < _MeshTrianglesNumber; j++)
                     {
-                        // TODO PROBLEMS
-                        if (all(adjTriangles[j].vertex1 == frontCap[0]) ||
-                            all(adjTriangles[j].vertex3 == frontCap[0]) ||
-                            all(adjTriangles[j].vertex5 == frontCap[0]) ||
-                        )
+                        bool3 b1 = adjTriangles[j].vertex1.xyz == frontCap[0].xyz;
+                        bool3 b2 = adjTriangles[j].vertex3.xyz == frontCap[0].xyz;
+                        bool3 b3 = adjTriangles[j].vertex5.xyz == frontCap[0].xyz;
+                        
+                        if ( all(b1) || all(b2) || all(b3))
                         {
-                            if (all(adjTriangles[j].vertex1 == frontCap[1]) ||
-                                all(adjTriangles[j].vertex3 == frontCap[1]) ||
-                                all(adjTriangles[j].vertex5 == frontCap[1]) ||
-                            )
+                            b1 = adjTriangles[j].vertex1.xyz == frontCap[1].xyz;
+                            b2 = adjTriangles[j].vertex3.xyz == frontCap[1].xyz;
+                            b3 = adjTriangles[j].vertex5.xyz == frontCap[1].xyz;
+
+                            if (all(b1) || all(b2) || all(b3))
                             {
-                                if (all(adjTriangles[j].vertex1 == frontCap[2]) ||
-                                    all(adjTriangles[j].vertex3 == frontCap[2]) ||
-                                    all(adjTriangles[j].vertex5 == frontCap[2]) ||
-                                )
+                                b1 = adjTriangles[j].vertex1.xyz == frontCap[2].xyz;
+                                b2 = adjTriangles[j].vertex3.xyz == frontCap[2].xyz;
+                                b3 = adjTriangles[j].vertex5.xyz == frontCap[2].xyz;
+
+                                if (all(b1) || all(b2) || all(b3))
                                 {
                                     // If the 3 central vertices are these three front cap vertices we found the id
                                     primitiveIdx = j;
@@ -246,6 +249,7 @@ Shader "Unlit/ShadowVolumeObjects"
                                 }
                             }
                         }
+                        
                     }
 
                     // Loop over the edges and connect the back and front cap
@@ -270,10 +274,10 @@ Shader "Unlit/ShadowVolumeObjects"
                         }
 
                         // If the triangles should be created
-                        bool createWall = false;
+                        bool createWall = true;
 
 
-                        if (false)
+                        if (createWall)
                         {
                             // Triangle 1 vertices
                             vert1 = frontCap[v0];
