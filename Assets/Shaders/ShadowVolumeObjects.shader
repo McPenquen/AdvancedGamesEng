@@ -9,7 +9,7 @@ Shader "Unlit/ShadowVolumeObjects"
         _LightSourcePower ("Light source power", Float) = 10 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _ShadowBias ("Shadow volume bias", Float) = 0.01 
-        _ObjectCenter ("The object center's world location", Vector) = (0,0,0,0) 
+        _MeshTrianglesNumber ("Number of triangles in the mesh", Int) = 6
     }
     SubShader
     {
@@ -43,6 +43,15 @@ Shader "Unlit/ShadowVolumeObjects"
             {
                 float4 vertex : SV_POSITION;
             };
+            struct adjTrianglesStruct
+            {
+               float4 vertex1;
+               float4 vertex2;
+               float4 vertex3;
+               float4 vertex4;
+               float4 vertex5;
+               float4 vertex6;
+            };
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
@@ -52,7 +61,9 @@ Shader "Unlit/ShadowVolumeObjects"
             fixed _LightSourceRadius;
             fixed _LightSourcePower;
             fixed _ShadowBias;
-            fixed3 _ObjectCenter;
+            int _MeshTrianglesNumber;
+
+            StructuredBuffer<adjTrianglesStruct> adjTriangles;
 
             // The vertex shader
             v2g vert (appdata v)
@@ -92,7 +103,14 @@ Shader "Unlit/ShadowVolumeObjects"
                 // Back cap vertices
                 float4 backCap[3];
                 // Centroid of the front cap
-                float4 frontCentroid = (0,0,0,0); 
+                float4 frontCentroid = (0,0,0,0);
+
+                // To the light directions
+                float3 lds[3];
+                // Triangle normals
+                float3 ns[3];
+                // If the main triangle is oriented towards light
+                bool isFacingLight = true; 
 
                 // Vertex to be generated
                 fixed4 vert;
@@ -106,266 +124,270 @@ Shader "Unlit/ShadowVolumeObjects"
                 // The object to retur
                 sg2f o;
 
-                // First the front cap
+                // Calculate normals for each vertex
+                ns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
+                ns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
+                ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
+
+                // Compute direction from vertices to light
+                lds[0] = _LightSourcePosition - input[0].worldPosition;
+                lds[1] = _LightSourcePosition - input[1].worldPosition;
+                lds[2] = _LightSourcePosition - input[2].worldPosition;
+
+                // Save the front cap vertices
                 for (int i = 0; i < 3; i++)
                 {
-                    vert = input[i].vertex;
-                    frontCap[i] = vert;
-                    o.vertex = UnityObjectToClipPos(vert);
-                    //triStream.Append(o);
+                    frontCap[i] = input[i].vertex;
+                }
+                // Find out if the triangle faces light
+                //if (!(dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 ))
+                if (dot(ns[0], lds[0]) < 0)
+                {
+                    isFacingLight = false;
+                    // Switch the vertices so it faves away from light
+                    frontCap[1] = input[2].vertex;
+                    frontCap[2] = input[1].vertex;
                 }
 
                 // Get the distance to light for all verices
-                fixed toLightDistance = length(_LightSourcePosition - input[0].worldPosition);
-                fixed toLightDistance2 = length(_LightSourcePosition - input[1].worldPosition);
-                fixed toLightDistance3 = length(_LightSourcePosition - input[2].worldPosition);
+                fixed toLightDistance0 = length(_LightSourcePosition - input[0].worldPosition);
+                fixed toLightDistance1 = length(_LightSourcePosition - input[1].worldPosition);
+                fixed toLightDistance2 = length(_LightSourcePosition - input[2].worldPosition);
                 // Cast shadows only if we have all vertices within the radius of the light
-                castShadows = (_LightSourceRadius - toLightDistance) > 0 && 
-                    (_LightSourceRadius - toLightDistance2) > 0 &&
-                    (_LightSourceRadius - toLightDistance3) > 0;
+                castShadows = (_LightSourceRadius - toLightDistance0) > 0 && 
+                    (_LightSourceRadius - toLightDistance1) > 0 &&
+                    (_LightSourceRadius - toLightDistance2) > 0;
 
                 // Cast shadows only if it is within the light's radius
                 if (castShadows)
                 {
-                    // Create the front cap only if we are casting shadows
-                    //triStream.RestartStrip();
+                    // First the front cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        vert = frontCap[i];
+                        o.vertex = UnityObjectToClipPos(vert);
+                        if (!isFacingLight)
+                        {
+                            triStream.Append(o);
+                        }
+                    }
+                    if (!isFacingLight)
+                    {
+                        triStream.RestartStrip();
+                    }
+                    
 
                     // Calculate centroid of the front cap triangle
                     frontCentroid.x = (frontCap[0].x + frontCap[1].x + frontCap[2].x) / 3;
                     frontCentroid.y = (frontCap[0].y + frontCap[1].y + frontCap[2].y) / 3;
-                    frontCentroid.x = (frontCap[0].z + frontCap[1].z + frontCap[2].z) / 3;
+                    frontCentroid.z = (frontCap[0].z + frontCap[1].z + frontCap[2].z) / 3;
 
                     // Then the back cap
                     for (int i = 0; i < 3; i++)
                     {
+                        // World position
+                        fixed3 worldPos = mul(unity_ObjectToWorld, frontCap[i]).xyz;
+
                         // Get the distance to light
-                        fixed toLightDistance = length(_LightSourcePosition - input[i].worldPosition);
+                        fixed toLightDistance = length(_LightSourcePosition - worldPos);
                         // Calculate the displacement of the shadow vertices 
                         fixed shadowBackCapDisplacement = _LightSourceRadius - toLightDistance;
 
-                        vert = input[i].vertex;
-                        fixed3 toLightDirection = normalize(input[i].worldPosition - _LightSourcePosition.xyz);
+                        vert = frontCap[i];
+                        fixed3 toLightDirection = normalize(worldPos - _LightSourcePosition.xyz);
 
                         vert.x = vert.x + toLightDirection.x * (_LightSourceRadius - toLightDistance);
                         vert.y = vert.y + toLightDirection.y * (_LightSourceRadius - toLightDistance);
                         vert.z = vert.z + toLightDirection.z * (_LightSourceRadius - toLightDistance);
 
                         backCap[i] = vert;
-
-                        o.vertex = UnityObjectToClipPos(vert);
+                    }
+                    // Generate the far/back cap away from the light
+                    if (isFacingLight) // Only for the vertices facing light
+                    {
+                        o.vertex = UnityObjectToClipPos(backCap[0]);
                         triStream.Append(o);
+                        o.vertex = UnityObjectToClipPos(backCap[2]);
+                        triStream.Append(o);
+                        o.vertex = UnityObjectToClipPos(backCap[1]);
+                        triStream.Append(o);
+                        triStream.RestartStrip();
+                    }
+                    else
+                    {
+                        //o.vertex = UnityObjectToClipPos(backCap[0]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[1]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[2]);
+                        //triStream.Append(o);
+                        //triStream.RestartStrip();
+                    }
+
+                    // Primitive Index in adj triangles
+                    int primitiveIdx = -1;
+                    // Find the index in all the adj triangles
+                    for (int j = 0; j < _MeshTrianglesNumber; j++)
+                    {
+                        bool3 b1 = adjTriangles[j].vertex1.xyz == frontCap[0].xyz;
+                        bool3 b2 = adjTriangles[j].vertex3.xyz == frontCap[0].xyz;
+                        bool3 b3 = adjTriangles[j].vertex5.xyz == frontCap[0].xyz;
+                        
+                        if ( all(b1) || all(b2) || all(b3))
+                        {
+                            b1 = adjTriangles[j].vertex1.xyz == frontCap[1].xyz;
+                            b2 = adjTriangles[j].vertex3.xyz == frontCap[1].xyz;
+                            b3 = adjTriangles[j].vertex5.xyz == frontCap[1].xyz;
+
+                            if (all(b1) || all(b2) || all(b3))
+                            {
+                                b1 = adjTriangles[j].vertex1.xyz == frontCap[2].xyz;
+                                b2 = adjTriangles[j].vertex3.xyz == frontCap[2].xyz;
+                                b3 = adjTriangles[j].vertex5.xyz == frontCap[2].xyz;
+
+                                if (all(b1) || all(b2) || all(b3))
+                                {
+                                    // If the 3 central vertices are these three front cap vertices we found the id
+                                    primitiveIdx = j;
+                                    break;      
+                                }
+                            }
+                        }
                         
                     }
-                    triStream.RestartStrip();
+
+                    // Array for all the 6 vertices
+                    float4 sixVertices[6];
+                    // Save the adjTriangles in a list
+                    sixVertices[0] = adjTriangles[primitiveIdx].vertex1;
+                    sixVertices[1] = adjTriangles[primitiveIdx].vertex2;
+                    sixVertices[2] = adjTriangles[primitiveIdx].vertex3;
+                    sixVertices[3] = adjTriangles[primitiveIdx].vertex4;
+                    sixVertices[4] = adjTriangles[primitiveIdx].vertex5;
+                    sixVertices[5] = adjTriangles[primitiveIdx].vertex6;
+                    
 
                     // Loop over the edges and connect the back and front cap
                     for (int i = 0; i < 3; i++)
                     {
                         // Find neighbour indeces for this triangle
-                        int v0 = i;
-                        int v1 = i+1;
-                        int v2 = i+2;
+                        int v0 = i*2;
+                        int extraV = (i*2)+1;
+                        int v2 = (i*2+2) % 6;
+                        // Find the indecies for the front and back cap arrays
+                        int fb0 = -1;
+                        int fb1 = -1;
+                        bool3 isIt; // check for vec3
+                        bool3 isIt2; // check for vec3
+                        bool doBreak = false;
 
-                        if (i == 1)
-                        {
-                            v0 = 1;
-                            v1 = 2;
-                            v2 = 0;
+                        for (int j = 0; j < 3; j++)
+                        { 
+                            isIt = sixVertices[v0].xyz == frontCap[j].xyz;
+                            int j2 = (j + 1) % 3;
+                            isIt2 = sixVertices[v2].xyz == frontCap[j2].xyz;
+                            if (all(isIt) && all(isIt2))
+                            {
+                                fb0 = j;
+                                fb1 = j2;
+                                break;
+                            }
+                            else if (j==2)
+                            {
+                                doBreak = true;
+                            }
                         }
-                        else if (i == 2)
+                        if (doBreak)
                         {
-                            v0 = 2;
-                            v1 = 0;
-                            v2 = 1;
-                        }
-
-                        // Triangle 1 vertices
-                        vert1 = frontCap[v0];
-                        vert2 = frontCap[v1];
-                        vert3 = backCap[v0];
-
-                        // Calculate the normal
-                        normal = cross(vert2 - vert1, vert3 - vert1);
-                        // The direction from the centroid to one of the vertices
-                        tempVec = frontCap[v0] - frontCentroid;
-                        // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
-                        if (dot(normal, tempVec) < 0)
-                        {
-                            vert2 = backCap[v0];
-                            vert3 = frontCap[v1];
+                            continue;
                         }
 
-                        // Triangle 1 from the front cap
-                        o.vertex = UnityObjectToClipPos(vert1);
-                        triStream.Append(o);
+                        //for (int j = 0; j < 3; j++)
+                        //{ 
+                        //    isIt = sixVertices[v2].xyz == frontCap[j].xyz;
+                        //    if (all(isIt))
+                        //    {
+                        //        fb1 = j;
+                        //    }
+                        //}
 
-                        o.vertex = UnityObjectToClipPos(vert2);
-                        triStream.Append(o);
+                        // Calculate normals for each adj triangle
+                        ns[0] = cross(sixVertices[extraV].xyz - sixVertices[v0].xyz, sixVertices[v2].xyz - sixVertices[v0].xyz);
+                        ns[1] = cross(sixVertices[v2].xyz - sixVertices[extraV].xyz, sixVertices[v0].xyz - sixVertices[extraV].xyz);
+                        ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
 
-                        o.vertex = UnityObjectToClipPos(vert3);
-                        triStream.Append(o); 
+                        // Compute direction from vertices to light
+                        lds[0] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
+                        lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
+                        lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
 
-                        triStream.RestartStrip();
-
-                        // Triangle 2 vertices
-                        vert1 = backCap[v0];
-                        vert2 = backCap[v1];
-                        vert3 = frontCap[v1];
-
-                        // Calculate the normal
-                        normal = cross(vert2 - vert1, vert3 - vert1);
-                        // The direction from the centroid to one of the vertices
-                        tempVec = frontCap[v1] - frontCentroid;
-                        // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
-                        if (dot(normal, tempVec) < 0)
+                        // If the w==-1 the extraV isn't assigned and so it is the edge,
+                        // or if the new triangle changes that it faces light, then it is an edge too
+                        if (sixVertices[extraV].w == -1 || 
+                            isFacingLight != (dot(ns[0], lds[0]) > 0)
+                            //isFacingLight != (dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 )
+                        )
                         {
-                            vert2 = frontCap[v1];
-                            vert3 = backCap[v1];
+                            // Triangle 1 vertices
+                            vert1 = frontCap[fb0];
+                            vert2 = frontCap[fb1];
+                            vert3 = backCap[fb0];
+
+                            // Calculate the normal
+                            normal = cross(vert2 - vert1, vert3 - vert1);
+                            // The direction from the centroid to one of the vertices
+                            tempVec = frontCap[fb0] - frontCentroid;
+                            // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
+                            if (dot(normal, tempVec) < 0)
+                            {
+                                vert2 = backCap[fb0];
+                                vert3 = frontCap[fb1];
+                            }
+
+                            // Triangle 1 from the front cap
+                            o.vertex = UnityObjectToClipPos(vert1);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert2);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert3);
+                            triStream.Append(o); 
+
+                            triStream.RestartStrip();
+
+                            // Triangle 2 vertices
+                            vert1 = backCap[fb0];
+                            vert2 = backCap[fb1];
+                            vert3 = frontCap[fb1];
+
+                            // Calculate the normal
+                            normal = cross(vert2 - vert1, vert3 - vert1);
+                            // The direction from the centroid to one of the vertices
+                            tempVec = frontCap[fb1] - frontCentroid;
+                            // If the angle between the 2 vectors is more than 90 deg it is pointing inwards so flip the two coordinates to flip the face
+                            if (dot(normal, tempVec) < 0)
+                            {
+                                vert2 = frontCap[fb1];
+                                vert3 = backCap[fb1];
+                            }
+        
+                            // Triangle 2 from the back cap
+                            o.vertex = UnityObjectToClipPos(vert1);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert2);
+                            triStream.Append(o);
+
+                            o.vertex = UnityObjectToClipPos(vert3);
+                            triStream.Append(o);    
+
+                            triStream.RestartStrip(); 
                         }
-    
-                        // Triangle 2 from the back cap
-                        o.vertex = UnityObjectToClipPos(vert1);
-                        triStream.Append(o);
-
-                        o.vertex = UnityObjectToClipPos(vert2);
-                        triStream.Append(o);
-
-                        o.vertex = UnityObjectToClipPos(vert3);
-                        triStream.Append(o);    
-
-                        triStream.RestartStrip(); 
                     }
                 }
             }
-
-            // OLD geometry shader for the shadow
-            [maxvertexcount(24)]
-            void oldShadowGeom(triangle v2g input[3], inout TriangleStream<sg2f> triStream)
-            {
-                float3 normals[3];
-                float3 toLightDirs[3];
-                float3 tempVertices[3];
-                float4 lightOrientedTriangle[3];
-                lightOrientedTriangle[0] = input[0].vertex;
-                lightOrientedTriangle[1] = input[1].vertex;
-                lightOrientedTriangle[2] = input[2].vertex;
-                float4 frontCap[3];
-                float4 backCap[3];
-
-                // Calculate normals for each vertex
-                normals[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
-                normals[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
-                normals[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
-
-                // Compute direction from vertices to light
-                toLightDirs[0] = _LightSourcePosition - input[0].vertex;
-                toLightDirs[1] = _LightSourcePosition - input[1].vertex;
-                toLightDirs[2] = _LightSourcePosition - input[2].vertex;
-
-                // Check if the triangle faces the light
-                bool facesLight = true;
-                if (!(dot(normals[0], toLightDirs[0]) > 0 || dot(normals[1], toLightDirs[1]) > 0 || dot(normals[2], toLightDirs[2]) > 0 ))
-                {
-                    facesLight = false;
-                    lightOrientedTriangle[1] = input[2].vertex;
-                    lightOrientedTriangle[2] = input[1].vertex;
-                }
-
-                // Transform the vertices to be of a shadow
-                sg2f o;
-                // First the front cap
-                for (int i = 0; i < 3; i++)
-                {
-                    fixed4 oldVert = lightOrientedTriangle[i];
-                    frontCap[i] = oldVert;
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
-
-                // Then the back cap
-                for (int i = 0; i < 3; i++)
-                {
-                    fixed4 oldVert = lightOrientedTriangle[i];
-                    // Light to vertex dir
-                    fixed3 toLightDirection = normalize(_LightSourcePosition - oldVert);
-                    fixed toLightDistance = length(_LightSourcePosition - oldVert);
-
-                    oldVert.x = oldVert.x + toLightDirection * (_LightSourceRadius - toLightDistance);
-                    oldVert.y = oldVert.y + toLightDirection * (_LightSourceRadius - toLightDistance);
-                    oldVert.z = oldVert.z + toLightDirection * (_LightSourceRadius - toLightDistance);
-
-                    backCap[i] = oldVert;
-
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
-
-                // Loop over the edges and connect the back and front cap
-                for (int i = 0; i < 3; i++)
-                {
-                    // Find neighbour indeces for this triangle
-                    int v0 = i;
-                    int v1 = i+1;
-                    int v2 = i+2;
-
-                    if (i == 1)
-                    {
-                        v0 = 1;
-                        v1 = 2;
-                        v2 = 0;
-                    }
-                    else if (i == 2)
-                    {
-                        v0 = 2;
-                        v1 = 0;
-                        v2 = 1;
-                    }
-                    
-                    // Compute again the normals and light directions                    
-                    normals[0] = cross(input[v1].vertex - input[v0].vertex, input[v2].vertex - input[v0].vertex);
-                    normals[1] = cross(input[v2].vertex - input[v1].vertex, input[v0].vertex - input[v1].vertex);
-                    normals[2] = cross(input[v0].vertex - input[v2].vertex, input[v1].vertex - input[v2].vertex);
-                    toLightDirs[0] = _LightSourcePosition - input[v0].vertex;
-                    toLightDirs[1] = _LightSourcePosition - input[v1].vertex;
-                    toLightDirs[2] = _LightSourcePosition - input[v2].vertex;
-
-                    // Orient the triangle correctly
-                    int i0 = facesLight ? v0 : v1;
-                    int i1 = facesLight ? v1 : v0;
-
-                    // Triangle 1 from the front cap
-                    fixed4 oldVert = frontCap[i0];
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);
-
-                    oldVert = frontCap[i1];
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);
-
-                    oldVert = backCap[i0];
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o); 
-
-                    triStream.RestartStrip();
-
-                    // Triangle 1 from the back cap
-                    oldVert = backCap[i0];
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);
-
-                    oldVert = backCap[i1];
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);
-
-                    oldVert = frontCap[i1];
-                    o.vertex = UnityObjectToClipPos(oldVert);
-                    triStream.Append(o);    
-
-                    triStream.RestartStrip(); 
-                }
-            }
+            
             // The shadow fragment shader
             fixed4 shadowFrag (sg2f i) : SV_Target
             {
@@ -457,13 +479,13 @@ Shader "Unlit/ShadowVolumeObjects"
             Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
             LOD 100
 
-            //Cull Back
+            Cull Back
             Blend SrcAlpha OneMinusSrcAlpha
-            //Stencil
-            //{
-            //    Ref 1
-            //    Comp equal 
-            //}
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+            }
 
 
             CGPROGRAM
