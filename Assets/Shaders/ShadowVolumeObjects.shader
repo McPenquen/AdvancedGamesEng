@@ -278,24 +278,38 @@ Shader "Unlit/ShadowVolumeObjects"
                         int fb0 = -1;
                         int fb1 = -1;
                         bool3 isIt; // check for vec3
+                        bool3 isIt2; // check for vec3
+                        bool doBreak = false;
 
                         for (int j = 0; j < 3; j++)
                         { 
                             isIt = sixVertices[v0].xyz == frontCap[j].xyz;
-                            if (all(isIt))
+                            int j2 = (j + 1) % 3;
+                            isIt2 = sixVertices[v2].xyz == frontCap[j2].xyz;
+                            if (all(isIt) && all(isIt2))
                             {
                                 fb0 = j;
+                                fb1 = j2;
+                                break;
                             }
+                            else if (j==2)
+                            {
+                                doBreak = true;
+                            }
+                        }
+                        if (doBreak)
+                        {
+                            continue;
                         }
 
-                        for (int j = 0; j < 3; j++)
-                        { 
-                            isIt = sixVertices[v2].xyz == frontCap[j].xyz;
-                            if (all(isIt))
-                            {
-                                fb1 = j;
-                            }
-                        }
+                        //for (int j = 0; j < 3; j++)
+                        //{ 
+                        //    isIt = sixVertices[v2].xyz == frontCap[j].xyz;
+                        //    if (all(isIt))
+                        //    {
+                        //        fb1 = j;
+                        //    }
+                        //}
 
                         // Calculate normals for each adj triangle
                         ns[0] = cross(sixVertices[extraV].xyz - sixVertices[v0].xyz, sixVertices[v2].xyz - sixVertices[v0].xyz);
@@ -467,11 +481,11 @@ Shader "Unlit/ShadowVolumeObjects"
 
             Cull Back
             Blend SrcAlpha OneMinusSrcAlpha
-            //Stencil
-            //{
-            //    Ref 1
-            //    Comp equal 
-            //}
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+            }
 
 
             CGPROGRAM
