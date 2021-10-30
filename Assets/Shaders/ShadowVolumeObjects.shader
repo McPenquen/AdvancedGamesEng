@@ -152,6 +152,8 @@ Shader "Unlit/ShadowVolumeObjects"
 
                 // Primitive Index in adj triangles
                 int primitiveIdx = -1;
+                // Index of the 1st input vertex so the adj triangles are in order 
+                int inputOneIdx = -1;
                 // Find the index in all the adj triangles
                 for (int j = 0; j < _MeshTrianglesNumber; j++)
                 {
@@ -164,6 +166,20 @@ Shader "Unlit/ShadowVolumeObjects"
                         b1 = adjTriangles[j].vertex1.xyz == input[1].vertex.xyz;
                         b2 = adjTriangles[j].vertex3.xyz == input[1].vertex.xyz;
                         b3 = adjTriangles[j].vertex5.xyz == input[1].vertex.xyz;
+
+                        // Save the 1st index
+                        if (all(b1))
+                        {
+                            inputOneIdx = 0;
+                        }
+                        else if (all(b2))
+                        {
+                            inputOneIdx = 2;
+                        }
+                        else if (all(b3))
+                        {
+                            inputOneIdx = 4;
+                        }
 
                         if (all(b1) || all(b2) || all(b3))
                         {
@@ -184,14 +200,44 @@ Shader "Unlit/ShadowVolumeObjects"
 
                 // Array for all the 6 vertices
                 float4 sixVertices[6];
-                // Save the adjTriangles in a list
-                sixVertices[0] = adjTriangles[primitiveIdx].vertex1;
-                sixVertices[1] = adjTriangles[primitiveIdx].vertex2;
-                sixVertices[2] = adjTriangles[primitiveIdx].vertex3;
-                sixVertices[3] = adjTriangles[primitiveIdx].vertex4;
-                sixVertices[4] = adjTriangles[primitiveIdx].vertex5;
-                sixVertices[5] = adjTriangles[primitiveIdx].vertex6;
-                
+                // Save the adjTriangles in a list in order
+                if (inputOneIdx==0)
+                {
+                    sixVertices[0] = adjTriangles[primitiveIdx].vertex1;
+                    sixVertices[1] = adjTriangles[primitiveIdx].vertex2;
+                    sixVertices[2] = adjTriangles[primitiveIdx].vertex3;
+                    sixVertices[3] = adjTriangles[primitiveIdx].vertex4;
+                    sixVertices[4] = adjTriangles[primitiveIdx].vertex5;
+                    sixVertices[5] = adjTriangles[primitiveIdx].vertex6;
+                }
+                else if (inputOneIdx==2)
+                {
+                    sixVertices[0] = adjTriangles[primitiveIdx].vertex3;
+                    sixVertices[1] = adjTriangles[primitiveIdx].vertex4;
+                    sixVertices[2] = adjTriangles[primitiveIdx].vertex5;
+                    sixVertices[3] = adjTriangles[primitiveIdx].vertex6;
+                    sixVertices[4] = adjTriangles[primitiveIdx].vertex1;
+                    sixVertices[5] = adjTriangles[primitiveIdx].vertex2;
+                }
+                else if (inputOneIdx==4)
+                {
+                    sixVertices[0] = adjTriangles[primitiveIdx].vertex5;
+                    sixVertices[1] = adjTriangles[primitiveIdx].vertex6;
+                    sixVertices[2] = adjTriangles[primitiveIdx].vertex1;
+                    sixVertices[3] = adjTriangles[primitiveIdx].vertex2;
+                    sixVertices[4] = adjTriangles[primitiveIdx].vertex3;
+                    sixVertices[5] = adjTriangles[primitiveIdx].vertex4;
+                }
+                else // break it  
+                {
+                    float4 breakIt = (0,0,0,0);
+                    sixVertices[0] = breakIt;
+                    sixVertices[1] = breakIt;
+                    sixVertices[2] = breakIt;
+                    sixVertices[3] = breakIt;
+                    sixVertices[4] = breakIt;
+                    sixVertices[5] = breakIt;
+                }
 
                 // The object to retur
                 sg2f o;
@@ -213,8 +259,8 @@ Shader "Unlit/ShadowVolumeObjects"
                     frontCap[i] = sixVertices[i*2];
                 }
                 // Find out if the triangle faces light
-                if (!(dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 ))
-                //if (dot(ns[0], lds[0]) < 0)
+                //if (!(dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 ))
+                if (dot(ns[0], lds[0]) > 0)
                 {
                     isFacingLight = false;
                     // Switch the vertices so it faves away from light
@@ -271,23 +317,23 @@ Shader "Unlit/ShadowVolumeObjects"
                     // Generate the far/back cap away from the light
                     if (isFacingLight) // Only for the vertices facing light
                     {
-                        o.vertex = UnityObjectToClipPos(backCap[0]);
-                        triStream.Append(o);
-                        o.vertex = UnityObjectToClipPos(backCap[2]);
-                        triStream.Append(o);
-                        o.vertex = UnityObjectToClipPos(backCap[1]);
-                        triStream.Append(o);
-                        triStream.RestartStrip();
+                        //o.vertex = UnityObjectToClipPos(backCap[0]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[2]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[1]);
+                        //triStream.Append(o);
+                        //triStream.RestartStrip();
                     }
                     else
                     {
-                        o.vertex = UnityObjectToClipPos(backCap[0]);
-                        triStream.Append(o);
-                        o.vertex = UnityObjectToClipPos(backCap[1]);
-                        triStream.Append(o);
-                        o.vertex = UnityObjectToClipPos(backCap[2]);
-                        triStream.Append(o);
-                        triStream.RestartStrip();
+                        //o.vertex = UnityObjectToClipPos(backCap[0]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[1]);
+                        //triStream.Append(o);
+                        //o.vertex = UnityObjectToClipPos(backCap[2]);
+                        //triStream.Append(o);
+                        //triStream.RestartStrip();
                     }
 
                     // Loop over the edges and connect the back and front cap
@@ -298,21 +344,26 @@ Shader "Unlit/ShadowVolumeObjects"
                         int extraV = (i*2)+1;
                         int v2 = (i*2+2) % 6;
                         // Find the indecies for the front and back cap arrays
-                        int fb0 = i;
-                        int fb1 = i+1;
-                        int fb2 = i+2;
+                        int fb0 = -1;
+                        int fb1 = -1;
+                        bool3 isIt; // check for vec3
 
-                        if (i == 1)
-                        {
-                            fb0 = 1;
-                            fb1 = 2;
-                            fb2 = 0;
+                        for (int j = 0; j < 3; j++)
+                        { 
+                            isIt = sixVertices[v0].xyz == frontCap[j].xyz;
+                            if (all(isIt))
+                            {
+                                fb0 = j;
+                            }
                         }
-                        else if (i == 2)
-                        {
-                            fb0 = 2;
-                            fb1 = 0;
-                            fb2 = 1;
+
+                        for (int j = 0; j < 3; j++)
+                        { 
+                            isIt = sixVertices[v2].xyz == frontCap[j].xyz;
+                            if (all(isIt))
+                            {
+                                fb1 = j;
+                            }
                         }
 
                         // Calculate normals for each adj triangle
@@ -328,7 +379,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         // If the w==-1 the extraV isn't assigned and so it is the edge,
                         // or if the new triangle changes that it faces light, then it is an edge too
                         if (sixVertices[extraV].w == -1 || 
-                            isFacingLight != (dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 )
+                            isFacingLight != (dot(ns[0], lds[0]) > 0) //(dot(ns[0], lds[0]) > 0 || dot(ns[1], lds[1]) > 0 || dot(ns[2], lds[2]) > 0 )
                         )
                         {
                             // Triangle 1 vertices
