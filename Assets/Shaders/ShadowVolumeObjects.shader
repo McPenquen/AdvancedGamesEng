@@ -252,13 +252,24 @@ Shader "Unlit/ShadowVolumeObjects"
                         
                     }
 
+                    // Array for all the 6 vertices
+                    float4 sixVertices[6];
+                    // Save the adjTriangles in a list
+                    sixVertices[0] = adjTriangles[primitiveIdx].vertex1;
+                    sixVertices[1] = adjTriangles[primitiveIdx].vertex2;
+                    sixVertices[2] = adjTriangles[primitiveIdx].vertex3;
+                    sixVertices[3] = adjTriangles[primitiveIdx].vertex4;
+                    sixVertices[4] = adjTriangles[primitiveIdx].vertex5;
+                    sixVertices[5] = adjTriangles[primitiveIdx].vertex6;
+                    
+
                     // Loop over the edges and connect the back and front cap
                     for (int i = 0; i < 3; i++)
                     {
                         // Find neighbour indeces for this triangle
                         int v0 = i;
-                        int v1 = i+1;
-                        int v2 = i+2;
+                        int v1 = (i)+1;
+                        int v2 = (i)+2;
 
                         if (i == 1)
                         {
@@ -274,7 +285,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         }
 
                         // If the triangles should be created
-                        bool createWall = true;
+                        bool createWall = false;
 
 
                         if (createWall)
