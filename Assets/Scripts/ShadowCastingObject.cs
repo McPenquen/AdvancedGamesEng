@@ -21,9 +21,6 @@ public struct AdjTriangles
 public class ShadowCastingObject : MonoBehaviour
 {
     private Renderer renderer = null;
-    private bool isMoving = false;
-    // Previous position
-    private Vector3 previousPosition = new Vector3(0,0,0);
     // Compute buffer with the adj triangles data
     private ComputeBuffer adjTrianglesBuffer;
     // The mesh
@@ -43,18 +40,6 @@ public class ShadowCastingObject : MonoBehaviour
         renderer.material.SetInt("_MeshTrianglesNumber", (meshComponent.triangles.Length / 3));
     }
 
-    void Update()
-    {
-        // If position of the light changes
-        isMoving = previousPosition != transform.position;
-        // Save the position
-        previousPosition = transform.position;
-        // If the object has moved update the buffer for the shader
-        if (isMoving)
-        {
-            //UpdateAdjTrianglesBuffer();
-        }
-    }
     private void UpdateAdjTrianglesBuffer()
     {
         // First find and assign all adj triangle groups

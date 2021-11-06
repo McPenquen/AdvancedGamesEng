@@ -8,7 +8,6 @@ Shader "Unlit/ShadowVolumeObjects"
         _LightSourceRadius ("Light source radius", Float) = 20 
         _LightSourcePower ("Light source power", Float) = 10 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
-        _ShadowBias ("Shadow volume bias", Float) = 0.01 
         _MeshTrianglesNumber ("Number of triangles in the mesh", Int) = 6
     }
     SubShader
@@ -60,7 +59,6 @@ Shader "Unlit/ShadowVolumeObjects"
             fixed4 _ShadowColor;
             fixed _LightSourceRadius;
             fixed _LightSourcePower;
-            fixed _ShadowBias;
             int _MeshTrianglesNumber;
 
             StructuredBuffer<adjTrianglesStruct> adjTriangles;
@@ -126,13 +124,13 @@ Shader "Unlit/ShadowVolumeObjects"
 
                 // Calculate normals for each vertex
                 ns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
-                ns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
-                ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
+                //ns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
+                //ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
 
                 // Compute direction from vertices to light
                 lds[0] = _LightSourcePosition - input[0].worldPosition;
-                lds[1] = _LightSourcePosition - input[1].worldPosition;
-                lds[2] = _LightSourcePosition - input[2].worldPosition;
+                //lds[1] = _LightSourcePosition - input[1].worldPosition;
+                //lds[2] = _LightSourcePosition - input[2].worldPosition;
 
                 // Save the front cap vertices
                 for (int i = 0; i < 3; i++)
@@ -213,8 +211,8 @@ Shader "Unlit/ShadowVolumeObjects"
                         triStream.Append(o);
                         triStream.RestartStrip();
                     }
-                    else
-                    {
+                    //else
+                    //{
                         //o.vertex = UnityObjectToClipPos(backCap[0]);
                         //triStream.Append(o);
                         //o.vertex = UnityObjectToClipPos(backCap[1]);
@@ -222,7 +220,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         //o.vertex = UnityObjectToClipPos(backCap[2]);
                         //triStream.Append(o);
                         //triStream.RestartStrip();
-                    }
+                    //}
 
                     // Primitive Index in adj triangles
                     int primitiveIdx = -1;
@@ -281,6 +279,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         bool3 isIt2; // check for vec3
                         bool doBreak = false;
 
+                        // Find the corresponding vertices to work with in the adj triangles 
                         for (int j = 0; j < 3; j++)
                         { 
                             isIt = sixVertices[v0].xyz == frontCap[j].xyz;
@@ -292,34 +291,26 @@ Shader "Unlit/ShadowVolumeObjects"
                                 fb1 = j2;
                                 break;
                             }
-                            else if (j==2)
+                            else if (j==2) // if we are at the end we still haven't find a match, we should not proceed 
                             {
                                 doBreak = true;
                             }
                         }
+                        // No match = These triangles shouldn't be generated so break
                         if (doBreak)
                         {
                             continue;
                         }
 
-                        //for (int j = 0; j < 3; j++)
-                        //{ 
-                        //    isIt = sixVertices[v2].xyz == frontCap[j].xyz;
-                        //    if (all(isIt))
-                        //    {
-                        //        fb1 = j;
-                        //    }
-                        //}
-
                         // Calculate normals for each adj triangle
                         ns[0] = cross(sixVertices[extraV].xyz - sixVertices[v0].xyz, sixVertices[v2].xyz - sixVertices[v0].xyz);
-                        ns[1] = cross(sixVertices[v2].xyz - sixVertices[extraV].xyz, sixVertices[v0].xyz - sixVertices[extraV].xyz);
-                        ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
+                        //ns[1] = cross(sixVertices[v2].xyz - sixVertices[extraV].xyz, sixVertices[v0].xyz - sixVertices[extraV].xyz);
+                        //ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
 
                         // Compute direction from vertices to light
                         lds[0] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
-                        lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
-                        lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
+                        //lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
+                        //lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
 
                         // If the w==-1 the extraV isn't assigned and so it is the edge,
                         // or if the new triangle changes that it faces light, then it is an edge too
@@ -494,19 +485,6 @@ Shader "Unlit/ShadowVolumeObjects"
             #pragma fragment shadowFrag
             ENDCG
         }
-
-        //Pass
-        //{
-        //    Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
-        //    LOD 100
-        //    Blend SrcAlpha OneMinusSrcAlpha
-//
-        //    CGPROGRAM
-        //    #pragma vertex vert
-        //    #pragma geometry shadowGeom
-        //    #pragma fragment shadowFrag
-        //    ENDCG
-        //}
     }
 }
 // shader basics learned from: https://www.youtube.com/watch?v=4XfXOEDzBx4&ab_channel=WorldofZero
