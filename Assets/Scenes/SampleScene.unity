@@ -1016,7 +1016,7 @@ MonoBehaviour:
   - {fileID: 1637391708}
   - {fileID: 1557586610}
   - {fileID: 1508450724}
-  radius: 20
+  radius: 30
   power: 25
 --- !u!4 &1596849058
 Transform:

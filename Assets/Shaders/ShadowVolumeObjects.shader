@@ -428,6 +428,7 @@ Shader "Unlit/ShadowVolumeObjects"
             LOD 100
 
             Cull Front
+            ZWrite Off
             Stencil
             {
                 Ref 0
@@ -449,6 +450,7 @@ Shader "Unlit/ShadowVolumeObjects"
             LOD 100
 
             Cull Back
+            ZWrite Off
             Stencil
             {
                 Ref 0
@@ -471,6 +473,7 @@ Shader "Unlit/ShadowVolumeObjects"
             LOD 100
 
             Cull Back
+            ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             Stencil
             {
