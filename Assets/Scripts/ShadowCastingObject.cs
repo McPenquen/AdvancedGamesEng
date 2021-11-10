@@ -25,6 +25,8 @@ public class ShadowCastingObject : MonoBehaviour
     private ComputeBuffer adjTrianglesBuffer;
     // The mesh
     private Mesh meshComponent = null;
+    // Light Source
+    [SerializeField] private CustomLightSource lightSource = null;
 
     void Start()
     {
@@ -40,6 +42,35 @@ public class ShadowCastingObject : MonoBehaviour
         renderer.material.SetInt("_MeshTrianglesNumber", (meshComponent.triangles.Length / 3));
     }
 
+    private void Update()
+    {
+        // Change the extents so it includes the shadow
+        UpdateTheBounds();
+    }
+
+    // Update the bounds to include the shadow
+    private void UpdateTheBounds()
+    {
+        Bounds newBounds = meshComponent.bounds;
+
+        // Calculate how much to move the center of the bounds
+        float toLightDistance = (lightSource.transform.position - transform.position).magnitude;
+        float centerDisplacement = (lightSource.GetRadius() - toLightDistance) / 2;
+        Vector3 fromLightDirection = (transform.position - lightSource.transform.position).normalized;
+        Vector3 newCenter = newBounds.center + (fromLightDirection * centerDisplacement);
+
+        // Calculate the extends
+        Vector3 furtherestPoint = meshComponent.bounds.center + (fromLightDirection * centerDisplacement * 2);
+        Vector3 newExtents;
+        newExtents.x = Mathf.Abs(furtherestPoint.x - newCenter.x);
+        newExtents.y = Mathf.Abs(furtherestPoint.y - newCenter.y);
+        newExtents.z = Mathf.Abs(furtherestPoint.z - newCenter.z);
+        newBounds.extents = newExtents;
+
+        meshComponent.bounds = newBounds;
+    }
+
+    // Update the buffer of adj triangles for tha geometry shader
     private void UpdateAdjTrianglesBuffer()
     {
         // First find and assign all adj triangle groups

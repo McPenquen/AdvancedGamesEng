@@ -41,4 +41,9 @@ public class CustomLightSource : MonoBehaviour
         }
 
     }
+
+    public float GetRadius()
+    {
+        return radius;
+    }
 }

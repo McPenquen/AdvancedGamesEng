@@ -192,11 +192,11 @@ Shader "Unlit/ShadowVolumeObjects"
                         fixed shadowBackCapDisplacement = _LightSourceRadius - toLightDistance;
 
                         vert = frontCap[i];
-                        fixed3 toLightDirection = normalize(worldPos - _LightSourcePosition.xyz);
+                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition.xyz);
 
-                        vert.x = vert.x + toLightDirection.x * (_LightSourceRadius - toLightDistance);
-                        vert.y = vert.y + toLightDirection.y * (_LightSourceRadius - toLightDistance);
-                        vert.z = vert.z + toLightDirection.z * (_LightSourceRadius - toLightDistance);
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius - toLightDistance);
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius - toLightDistance);
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius - toLightDistance);
 
                         backCap[i] = vert;
                     }
@@ -405,12 +405,6 @@ Shader "Unlit/ShadowVolumeObjects"
                 fixed intensity = max(dot(lightDirection, i.worldNormal), 0);
                 
                 // TODO adjust the diffuse based on the light's radius value
-                // Add distance in relation to the radius to the equation
-                //fixed toLightDistance = length(-i.worldPosition + _LightSourcePosition.xyz);
-                // Define light constants
-                //fixed3 constants = (1, 1, 1);
-                //fixed attenutation = 1 /(constants.x/_LightSourcePower + constants.y/_LightSourcePower * toLightDistance + constants.z * toLightDistance * toLightDistance);
-                // learned from: https://gamedev.stackexchange.com/questions/21057/does-the-linear-attenuation-component-in-lighting-models-have-a-physical-counter 
 
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
