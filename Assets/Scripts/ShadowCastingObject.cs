@@ -55,16 +55,20 @@ public class ShadowCastingObject : MonoBehaviour
 
         // Calculate how much to move the center of the bounds
         float toLightDistance = (lightSource.transform.position - transform.position).magnitude;
-        float centerDisplacement = (lightSource.GetRadius() - toLightDistance) / 2;
+        float displacement = (lightSource.GetRadius() - toLightDistance);
         Vector3 fromLightDirection = (transform.position - lightSource.transform.position).normalized;
-        Vector3 newCenter = newBounds.center + (fromLightDirection * centerDisplacement);
+        Vector3 newWorldCenter = transform.position + (fromLightDirection * displacement / 2);
 
         // Calculate the extends
-        Vector3 furtherestPoint = meshComponent.bounds.center + (fromLightDirection * centerDisplacement * 2);
+        Vector3 furtherestPoint = transform.position + fromLightDirection * 
+            (Mathf.Sqrt(Mathf.Pow(meshComponent.bounds.extents.x, 2) 
+            + Mathf.Pow(meshComponent.bounds.extents.y, 2) 
+            + Mathf.Pow(meshComponent.bounds.extents.z, 2)));
+        furtherestPoint += (fromLightDirection * displacement);
         Vector3 newExtents;
-        newExtents.x = Mathf.Abs(furtherestPoint.x - newCenter.x);
-        newExtents.y = Mathf.Abs(furtherestPoint.y - newCenter.y);
-        newExtents.z = Mathf.Abs(furtherestPoint.z - newCenter.z);
+        newExtents.x = Mathf.Abs(furtherestPoint.x - newWorldCenter.x);
+        newExtents.y = Mathf.Abs(furtherestPoint.y - newWorldCenter.y);
+        newExtents.z = Mathf.Abs(furtherestPoint.z - newWorldCenter.z);
         newBounds.extents = newExtents;
 
         meshComponent.bounds = newBounds;
