@@ -185,6 +185,12 @@ Shader "Unlit/ShadowVolumeObjects"
                     {
                         // World position
                         fixed3 worldPos = mul(unity_ObjectToWorld, frontCap[i]).xyz;
+                        // Get scale
+                        float3 worldScale = float3(
+                            length(float3(unity_ObjectToWorld[0].x, unity_ObjectToWorld[1].x, unity_ObjectToWorld[2].x)), // scale x axis
+                            length(float3(unity_ObjectToWorld[0].y, unity_ObjectToWorld[1].y, unity_ObjectToWorld[2].y)), // scale y axis
+                            length(float3(unity_ObjectToWorld[0].z, unity_ObjectToWorld[1].z, unity_ObjectToWorld[2].z))  // scale z axis
+                            );
 
                         // Get the distance to light
                         fixed toLightDistance = length(_LightSourcePosition - worldPos);
@@ -194,9 +200,9 @@ Shader "Unlit/ShadowVolumeObjects"
                         vert = frontCap[i];
                         fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius - toLightDistance);
-                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius - toLightDistance);
-                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius - toLightDistance);
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius - toLightDistance) / worldScale.x;
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius - toLightDistance) / worldScale.y;
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius - toLightDistance) / worldScale.z;
 
                         backCap[i] = vert;
                     }
