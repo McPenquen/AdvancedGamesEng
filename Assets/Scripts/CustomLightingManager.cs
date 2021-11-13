@@ -9,12 +9,15 @@ public class CustomLightingManager : MonoBehaviour
     // Light sources
     [SerializeField] IndividualLightSource[] lightSources = null;
     // Radiuses of the lightsource
-    private float[] _radiuses = {0,0};
+    private float[] _radiuses;
     // Radiuses of the lightsource
-    private Vector3[] _lsPositions = {new Vector3(0,0,0), new Vector3(0,0,0)};
+    private Vector3[] _lsPositions;
 
     void Start()
     {
+        _lsPositions = new Vector3[lightSources.Length];
+        _radiuses = new float[lightSources.Length];
+
         // Save the radius for each light source
         for (int i = 0; i < lightSources.Length; i++)
         {
@@ -26,11 +29,10 @@ public class CustomLightingManager : MonoBehaviour
                 Vector4 vec4 = new Vector4(_lsPositions[i].x, _lsPositions[i].y, _lsPositions[i].z, 0);
                 // Update the shaders for the objects
                 Renderer r = o.GetComponent<Renderer>();
-                if (i == 0)
-                {
-                    r.material.SetVector("_LightSourcePosition1", vec4); 
-                     r.material.SetFloat("_LightSourceRadius1", _radiuses[0]);  
-                }
+
+                r.material.SetVector("_LightSourcePosition" + (i+1), vec4); 
+                r.material.SetFloat("_LightSourceRadius" + (i+1), _radiuses[0]);
+                r.material.SetInt("_LightSourcesAmount", lightSources.Length);
                 
             }
         }
@@ -38,8 +40,6 @@ public class CustomLightingManager : MonoBehaviour
 
     void Update()
     {
-        Debug.Log("Radius: " + _radiuses[0]);
-        Debug.Log("Position: " + _lsPositions[0]);
         // Iterate through all light sources
         for (int i = 0; i < lightSources.Length; i++)
         {
@@ -51,11 +51,7 @@ public class CustomLightingManager : MonoBehaviour
                 {
                     // Update the shaders for the objects
                     Renderer r = o.GetComponent<Renderer>();
-                    if (i == 0)
-                    {
-                      r.material.SetVector("_LightSourcePosition1", vec4);  
-                    }
-                    
+                    r.material.SetVector("_LightSourcePosition" + (i+1), vec4);
                 }
             }
             // Update the light source's power and radius
@@ -67,11 +63,7 @@ public class CustomLightingManager : MonoBehaviour
                 {
                     // Update the shaders for the objects
                     Renderer r = o.GetComponent<Renderer>();
-                    if (i == 0)
-                    {
-                       r.material.SetFloat("_LightSourceRadius1", newR); 
-                    }
-                    
+                    r.material.SetFloat("_LightSourceRadius" + (i+1), newR); 
                 }
             }
         }

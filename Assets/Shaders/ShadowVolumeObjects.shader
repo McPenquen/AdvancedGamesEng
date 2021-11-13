@@ -10,6 +10,7 @@ Shader "Unlit/ShadowVolumeObjects"
         _LightSourceRadius2 ("Light source radius 1", Float) = -1 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _MeshTrianglesNumber ("Number of triangles in the mesh", Int) = 6
+        _LightSourcesAmount ("Number of light sources", Int) = 2
     }
     SubShader
     {
@@ -62,6 +63,7 @@ Shader "Unlit/ShadowVolumeObjects"
             fixed _LightSourceRadius1;
             fixed _LightSourceRadius2;
             int _MeshTrianglesNumber;
+            int _LightSourcesAmount;
 
             StructuredBuffer<adjTrianglesStruct> adjTriangles;
 
@@ -477,12 +479,11 @@ Shader "Unlit/ShadowVolumeObjects"
             Cull Back
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-            //Stencil
-            //{
-            //    Ref 1
-            //    Comp equal 
-            //}
-
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+            }
 
             CGPROGRAM
             #pragma vertex vert
