@@ -26,7 +26,7 @@ public class ShadowCastingObject : MonoBehaviour
     // The mesh
     private Mesh meshComponent = null;
     // Light Source
-    [SerializeField] private CustomLightSource lightSource = null;
+    [SerializeField] private CustomLightingManager lightSources = null;
 
     void Start()
     {
@@ -53,10 +53,13 @@ public class ShadowCastingObject : MonoBehaviour
     {
         Bounds newBounds = meshComponent.bounds;
 
+        float radius0 = lightSources.GetRadiuses()[0];
+        Vector3 position0 = lightSources.GetLightSourcePositions()[0];
+
         // Calculate how much to move the center of the bounds
-        float toLightDistance = (lightSource.transform.position - transform.position).magnitude;
-        float displacement = (lightSource.GetRadius() - toLightDistance);
-        Vector3 fromLightDirection = (transform.position - lightSource.transform.position).normalized;
+        float toLightDistance = (position0 - transform.position).magnitude;
+        float displacement = (radius0 - toLightDistance);
+        Vector3 fromLightDirection = (transform.position - position0).normalized;
         Vector3 newWorldCenter = transform.position + (fromLightDirection * displacement / 2);
 
         // Calculate the extends

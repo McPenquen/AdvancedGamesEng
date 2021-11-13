@@ -4,9 +4,10 @@ Shader "Unlit/ShadowVolumeObjects"
     {
         _Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Texture", 2D) = "white" {}
-        _LightSourcePosition ("Light Source Position", Vector) = (0, 5 ,0, 0)
-        _LightSourceRadius ("Light source radius", Float) = 20 
-        _LightSourcePower ("Light source power", Float) = 10 
+        _LightSourcePosition1 ("Light Source Position 1", Vector) = (-1, -1 ,-1, -1)
+        _LightSourceRadius1 ("Light source radius 1", Float) = -1
+        _LightSourcePosition2 ("Light Source Position 1", Vector) = (-1, -1 ,-1, -1)
+        _LightSourceRadius2 ("Light source radius 1", Float) = -1 
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _MeshTrianglesNumber ("Number of triangles in the mesh", Int) = 6
     }
@@ -55,10 +56,11 @@ Shader "Unlit/ShadowVolumeObjects"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             fixed4 _Color;
-            fixed4 _LightSourcePosition;
+            fixed4 _LightSourcePosition1;
+            fixed4 _LightSourcePosition2;
             fixed4 _ShadowColor;
-            fixed _LightSourceRadius;
-            fixed _LightSourcePower;
+            fixed _LightSourceRadius1;
+            fixed _LightSourceRadius2;
             int _MeshTrianglesNumber;
 
             StructuredBuffer<adjTrianglesStruct> adjTriangles;
@@ -128,7 +130,7 @@ Shader "Unlit/ShadowVolumeObjects"
                 //ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
 
                 // Compute direction from vertices to light
-                lds[0] = _LightSourcePosition - input[0].worldPosition;
+                lds[0] = _LightSourcePosition1 - input[0].worldPosition;
                 //lds[1] = _LightSourcePosition - input[1].worldPosition;
                 //lds[2] = _LightSourcePosition - input[2].worldPosition;
 
@@ -148,13 +150,13 @@ Shader "Unlit/ShadowVolumeObjects"
                 }
 
                 // Get the distance to light for all verices
-                fixed toLightDistance0 = length(_LightSourcePosition - input[0].worldPosition);
-                fixed toLightDistance1 = length(_LightSourcePosition - input[1].worldPosition);
-                fixed toLightDistance2 = length(_LightSourcePosition - input[2].worldPosition);
+                fixed toLightDistance0 = length(_LightSourcePosition1 - input[0].worldPosition);
+                fixed toLightDistance1 = length(_LightSourcePosition1 - input[1].worldPosition);
+                fixed toLightDistance2 = length(_LightSourcePosition1 - input[2].worldPosition);
                 // Cast shadows only if we have all vertices within the radius of the light
-                castShadows = (_LightSourceRadius - toLightDistance0) > 0 && 
-                    (_LightSourceRadius - toLightDistance1) > 0 &&
-                    (_LightSourceRadius - toLightDistance2) > 0;
+                castShadows = (_LightSourceRadius1 - toLightDistance0) > 0 && 
+                    (_LightSourceRadius1 - toLightDistance1) > 0 &&
+                    (_LightSourceRadius1 - toLightDistance2) > 0;
 
                 // Cast shadows only if it is within the light's radius
                 if (castShadows)
@@ -193,16 +195,16 @@ Shader "Unlit/ShadowVolumeObjects"
                             );
 
                         // Get the distance to light
-                        fixed toLightDistance = length(_LightSourcePosition - worldPos);
+                        fixed toLightDistance = length(_LightSourcePosition1 - worldPos);
                         // Calculate the displacement of the shadow vertices 
-                        fixed shadowBackCapDisplacement = _LightSourceRadius - toLightDistance;
+                        fixed shadowBackCapDisplacement = _LightSourceRadius1 - toLightDistance;
 
                         vert = frontCap[i];
-                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition.xyz);
+                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition1.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius - toLightDistance) / worldScale.x;
-                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius - toLightDistance) / worldScale.y;
-                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius - toLightDistance) / worldScale.z;
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius1 - toLightDistance) / worldScale.x;
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius1 - toLightDistance) / worldScale.y;
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius1 - toLightDistance) / worldScale.z;
 
                         backCap[i] = vert;
                     }
@@ -314,7 +316,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         //ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
 
                         // Compute direction from vertices to light
-                        lds[0] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
+                        lds[0] = _LightSourcePosition1.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
                         //lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
                         //lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
 
@@ -407,7 +409,7 @@ Shader "Unlit/ShadowVolumeObjects"
             fixed4 frag (g2f i) : SV_Target
             {
                 // Calculate the amount of light falling on the pixel
-                fixed3 lightDirection = normalize(-i.worldPosition + _LightSourcePosition.xyz);
+                fixed3 lightDirection = normalize(-i.worldPosition + _LightSourcePosition1.xyz);
                 fixed intensity = max(dot(lightDirection, i.worldNormal), 0);
                 
                 // TODO adjust the diffuse based on the light's radius value
@@ -475,11 +477,11 @@ Shader "Unlit/ShadowVolumeObjects"
             Cull Back
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref 1
-                Comp equal 
-            }
+            //Stencil
+            //{
+            //    Ref 1
+            //    Comp equal 
+            //}
 
 
             CGPROGRAM
