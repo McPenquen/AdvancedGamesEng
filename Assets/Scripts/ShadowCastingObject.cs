@@ -20,61 +20,28 @@ public struct AdjTriangles
 // Class for the shadow casting object
 public class ShadowCastingObject : MonoBehaviour
 {
-    private Renderer renderer = null;
     // Compute buffer with the adj triangles data
     private ComputeBuffer adjTrianglesBuffer;
     // The mesh
     private Mesh meshComponent = null;
-    // Light Source
-    [SerializeField] private CustomLightingManager lightSources = null;
 
     void Start()
     {
-        // Get needed components
-        renderer = GetComponent<Renderer>();
         meshComponent = GetComponent<MeshFilter>().mesh;
         // Set the buffer for adj triangles
         adjTrianglesBuffer = new ComputeBuffer(
             (meshComponent.triangles.Length / 3) * 6, AdjTriangles.GetSize()
             );
+        
+        // Update the adj triangles buffers for all shadow meshes
         UpdateAdjTrianglesBuffer();
+
         // Save the number of triangles
-        renderer.material.SetInt("_MeshTrianglesNumber", (meshComponent.triangles.Length / 3));
-    }
-
-    private void Update()
-    {
-        // Change the extents so it includes the shadow
-        UpdateTheBounds();
-    }
-
-    // Update the bounds to include the shadow
-    private void UpdateTheBounds()
-    {
-        Bounds newBounds = meshComponent.bounds;
-
-        float radius0 = lightSources.GetRadiuses()[0];
-        Vector3 position0 = lightSources.GetLightSourcePositions()[0];
-
-        // Calculate how much to move the center of the bounds
-        float toLightDistance = (position0 - transform.position).magnitude;
-        float displacement = (radius0 - toLightDistance);
-        Vector3 fromLightDirection = (transform.position - position0).normalized;
-        Vector3 newWorldCenter = transform.position + (fromLightDirection * displacement / 2);
-
-        // Calculate the extends
-        Vector3 furtherestPoint = transform.position + fromLightDirection * 
-            (Mathf.Sqrt(Mathf.Pow(meshComponent.bounds.extents.x, 2) 
-            + Mathf.Pow(meshComponent.bounds.extents.y, 2) 
-            + Mathf.Pow(meshComponent.bounds.extents.z, 2)));
-        furtherestPoint += (fromLightDirection * displacement);
-        Vector3 newExtents;
-        newExtents.x = Mathf.Abs(furtherestPoint.x - newWorldCenter.x);
-        newExtents.y = Mathf.Abs(furtherestPoint.y - newWorldCenter.y);
-        newExtents.z = Mathf.Abs(furtherestPoint.z - newWorldCenter.z);
-        newBounds.extents = newExtents;
-
-        meshComponent.bounds = newBounds;
+        for (int j = 0; j < gameObject.transform.childCount; j++)
+        {
+            Renderer re = gameObject.transform.GetChild(j).GetComponent<Renderer>();
+            re.material.SetInt("_MeshTrianglesNumber", (meshComponent.triangles.Length / 3));
+        }
     }
 
     // Update the buffer of adj triangles for tha geometry shader
@@ -186,9 +153,12 @@ public class ShadowCastingObject : MonoBehaviour
         //Update the Buffer
         adjTrianglesBuffer.SetData(adjTrianglesArray);
 
-        // Send the buffer to the material
-        renderer.material.SetBuffer("adjTriangles", adjTrianglesBuffer);
-
+        // Send the buffer to the materials
+        for (int j = 0; j < gameObject.transform.childCount; j++)
+        {
+            Renderer re = gameObject.transform.GetChild(j).GetComponent<Renderer>();
+            re.material.SetBuffer("adjTriangles", adjTrianglesBuffer);
+        }
     }
     private void OnDisable()
     {

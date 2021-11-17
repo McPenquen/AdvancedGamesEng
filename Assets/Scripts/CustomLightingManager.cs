@@ -27,12 +27,16 @@ public class CustomLightingManager : MonoBehaviour
             foreach (GameObject o in objects)
             {
                 Vector4 vec4 = new Vector4(_lsPositions[i].x, _lsPositions[i].y, _lsPositions[i].z, 0);
-                // Update the shaders for the objects
+                // Update the shaders for all shadow objects
                 Renderer r = o.GetComponent<Renderer>();
+                Renderer re = o.gameObject.transform.GetChild(i).GetComponent<Renderer>();
 
-                r.material.SetVector("_LightSourcePosition" + (i+1), vec4); 
-                r.material.SetFloat("_LightSourceRadius" + (i+1), _radiuses[0]);
-                r.material.SetInt("_LightSourcesAmount", lightSources.Length);                
+                r.material.SetVector("_LightSourcePosition" + (i+1), vec4);
+                r.material.SetInt("_LightSourcesAmount", lightSources.Length);
+
+                re.material.SetVector("_LightSourcePosition" + (i+1), vec4); 
+                re.material.SetFloat("_LightSourceRadius" + (i+1), _radiuses[0]);
+                re.material.SetInt("_LightSourcesAmount", lightSources.Length);                
             }
         }
     }
@@ -50,7 +54,9 @@ public class CustomLightingManager : MonoBehaviour
                 {
                     // Update the shaders for the objects
                     Renderer r = o.GetComponent<Renderer>();
+                    Renderer re = o.gameObject.transform.GetChild(i).GetComponent<Renderer>();
                     r.material.SetVector("_LightSourcePosition" + (i+1), vec4);
+                    re.material.SetVector("_LightSourcePosition" + (i+1), vec4);
                 }
             }
             // Update the light source's power and radius
@@ -61,7 +67,7 @@ public class CustomLightingManager : MonoBehaviour
                 foreach (GameObject o in objects)
                 {
                     // Update the shaders for the objects
-                    Renderer r = o.GetComponent<Renderer>();
+                    Renderer r = o.gameObject.transform.GetChild(i).GetComponent<Renderer>();
                     r.material.SetFloat("_LightSourceRadius" + (i+1), newR); 
                 }
             }

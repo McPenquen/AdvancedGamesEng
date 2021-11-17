@@ -31,14 +31,6 @@ Shader "Unlit/ShadowVolumeObjects"
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPosition : TEXCOORD2;
             };
-            // Geometry shader info send to fragment shader
-            struct g2f
-            {
-                float4 vertex : SV_POSITION;
-                float2 uv : TEXCOORD0;
-                float3 worldNormal : TEXCOORD1;
-                float3 worldPosition : TEXCOORD2;
-            };
             // Shadow geometry shader info send to the shadow fragment shader
             struct sg2f
             {
@@ -83,21 +75,6 @@ Shader "Unlit/ShadowVolumeObjects"
                 o.vertex = v.vertex;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
-            }
-            // The geometry shader for the object
-            [maxvertexcount(3)]
-            void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
-            {
-                g2f o;
-                for (int i = 0; i < 3; i++)
-                {
-                    o.vertex = UnityObjectToClipPos(input[i].vertex);
-                    o.uv = input[i].uv;
-                    o.worldPosition = input[i].worldPosition;
-                    o.worldNormal = input[i].worldNormal;
-                    triStream.Append(o);
-                }
-                triStream.RestartStrip();
             }
 
             // The geometry shader for the shadow
@@ -419,34 +396,7 @@ Shader "Unlit/ShadowVolumeObjects"
                 // Return shadow color
                 return _ShadowColor;
             }
-
         ENDCG
-
-        Pass
-        {
-            Tags { "RenderType"="Opaque" }
-            LOD 100
-
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma geometry geom
-            #pragma fragment frag
-
-            fixed4 frag (g2f i) : SV_Target
-            {
-                // Calculate the amount of light falling on the pixel
-                fixed3 lightDirection = normalize(-i.worldPosition + _LightSourcePosition1.xyz);
-                fixed intensity = max(dot(lightDirection, i.worldNormal), 0);
-                
-                // TODO adjust the diffuse based on the light's radius value
-
-                // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
-                return col;
-
-            }
-            ENDCG
-        }
 
         // Shadow Passes beneath - Carmack's
         // Shadow pass 1
@@ -503,11 +453,11 @@ Shader "Unlit/ShadowVolumeObjects"
             Cull Back
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref 1
-                Comp equal 
-            }
+            //Stencil
+            //{
+            //    Ref 1
+            //    Comp equal 
+            //}
 
             CGPROGRAM
             #pragma vertex vert
