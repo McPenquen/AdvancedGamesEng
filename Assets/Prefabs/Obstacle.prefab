@@ -126,3 +126,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lightSources: {fileID: 0}

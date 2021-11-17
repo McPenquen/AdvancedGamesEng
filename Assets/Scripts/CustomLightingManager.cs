@@ -32,8 +32,7 @@ public class CustomLightingManager : MonoBehaviour
 
                 r.material.SetVector("_LightSourcePosition" + (i+1), vec4); 
                 r.material.SetFloat("_LightSourceRadius" + (i+1), _radiuses[0]);
-                r.material.SetInt("_LightSourcesAmount", lightSources.Length);
-                
+                r.material.SetInt("_LightSourcesAmount", lightSources.Length);                
             }
         }
     }

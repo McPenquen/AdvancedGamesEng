@@ -140,7 +140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &56532963
 GameObject:
   m_ObjectHideFlags: 0
@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &169665349 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2694886317584688067, guid: e4629c6705fe99147bd70406228d5128, type: 3}
@@ -234,6 +234,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
       propertyPath: lightSource
+      value: 
+      objectReference: {fileID: 1596849057}
+    - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
+      propertyPath: lightSources
       value: 
       objectReference: {fileID: 1596849057}
     - target: {fileID: 2694886317584688094, guid: e4629c6705fe99147bd70406228d5128, type: 3}
@@ -316,7 +320,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &316441911 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -287967138314299011, guid: 3833640b0a84f9d4fb20a713d38c02a2, type: 3}
@@ -334,7 +338,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &349781108 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2694886317584688067, guid: e4629c6705fe99147bd70406228d5128, type: 3}
@@ -442,7 +446,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!23 &488936457
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -567,7 +571,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1001 &775492093
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -581,6 +585,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
       propertyPath: lightSource
+      value: 
+      objectReference: {fileID: 1596849057}
+    - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
+      propertyPath: lightSources
       value: 
       objectReference: {fileID: 1596849057}
     - target: {fileID: 2694886317584688094, guid: e4629c6705fe99147bd70406228d5128, type: 3}
@@ -893,7 +901,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1001 &1062351354
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -980,7 +988,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &1068917784 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -4748651489731318079, guid: 3833640b0a84f9d4fb20a713d38c02a2, type: 3}
@@ -998,7 +1006,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &1080478513 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 194701694436471672, guid: 3833640b0a84f9d4fb20a713d38c02a2, type: 3}
@@ -1016,7 +1024,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &1081396800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1068,6 +1076,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
       propertyPath: lightSource
+      value: 
+      objectReference: {fileID: 1596849057}
+    - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
+      propertyPath: lightSources
       value: 
       objectReference: {fileID: 1596849057}
     - target: {fileID: 2694886317584688094, guid: e4629c6705fe99147bd70406228d5128, type: 3}
@@ -1360,7 +1372,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &1502465679 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -529116327577204606, guid: 3833640b0a84f9d4fb20a713d38c02a2, type: 3}
@@ -1378,7 +1390,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &1548486210
 GameObject:
   m_ObjectHideFlags: 0
@@ -1529,8 +1541,8 @@ MonoBehaviour:
   - {fileID: 488936455}
   - {fileID: 2090008493}
   - {fileID: 349781108}
-  radius: 30
-  power: 25
+  lightSources:
+  - {fileID: 1834603919}
 --- !u!4 &1596849058
 Transform:
   m_ObjectHideFlags: 0
@@ -1563,7 +1575,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!4 &1618688419 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 170e7c1642f8acb42af3f59b9268e940, type: 3}
@@ -1720,6 +1732,10 @@ PrefabInstance:
       propertyPath: lightSource
       value: 
       objectReference: {fileID: 1596849057}
+    - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
+      propertyPath: lightSources
+      value: 
+      objectReference: {fileID: 1596849057}
     - target: {fileID: 2694886317584688095, guid: e4629c6705fe99147bd70406228d5128, type: 3}
       propertyPath: m_RootOrder
       value: 1
@@ -1787,7 +1803,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
 --- !u!1 &1708681385 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2694886317584688067, guid: e4629c6705fe99147bd70406228d5128, type: 3}
@@ -1910,6 +1926,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2694886317584688095, guid: e4629c6705fe99147bd70406228d5128, type: 3}
   m_PrefabInstance: {fileID: 1125276239}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1834603919 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1136573609403015245, guid: d8c02416d678d2b4b9e383e2c0847e3a, type: 3}
+  m_PrefabInstance: {fileID: 1062351354}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3c1e5bfff74d8049b1341b33860bc4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2090008493 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2769348785541520973, guid: 170e7c1642f8acb42af3f59b9268e940, type: 3}
@@ -1927,4 +1954,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a366081827ee16f45907cae9074fe683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lightSource: {fileID: 1596849057}
+  lightSources: {fileID: 1596849057}
