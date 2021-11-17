@@ -53,12 +53,6 @@ Shader "Unlit/ShadowVolumeObjects"
             float4 vertex5;
             float4 vertex6;
         };
-        // Struct for the light sources
-        struct lightSourceObject
-        {
-            float4 position;
-            float radius;
-        };
 
         sampler2D _MainTex;
         float4 _MainTex_ST;
@@ -132,25 +126,16 @@ Shader "Unlit/ShadowVolumeObjects"
             // The object to retur
             sg2f o;
 
-            // Continue if we have more than 1 light sources
+            // Continue if we have more than 1 light sources - create the 1st shadow
             if (_LightSourcesAmount > 0)
             {
-                // This is the 1st shadow in the array
-                int lNumber = 0;
-
-                // Save the light sources in an array
-                lightSourceObject lightSourcesArr[2];
-
-                lightSourcesArr[0].position = _LightSourcePosition1;
-                lightSourcesArr[0].radius = _LightSourceRadius1;
-
                 // Calculate normals for each vertex
                 ns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
                 //ns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
                 //ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
 
                 // Compute direction from vertices to light
-                lds[0] = lightSourcesArr[lNumber].position - input[0].worldPosition;
+                lds[0] = _LightSourcePosition1 - input[0].worldPosition;
                 //lds[1] = _LightSourcePosition - input[1].worldPosition;
                 //lds[2] = _LightSourcePosition - input[2].worldPosition;
 
@@ -170,13 +155,13 @@ Shader "Unlit/ShadowVolumeObjects"
                 }
 
                 // Get the distance to light for all verices
-                fixed toLightDistance0 = length(lightSourcesArr[lNumber].position - input[0].worldPosition);
-                fixed toLightDistance1 = length(lightSourcesArr[lNumber].position - input[1].worldPosition);
-                fixed toLightDistance2 = length(lightSourcesArr[lNumber].position - input[2].worldPosition);
+                fixed toLightDistance0 = length(_LightSourcePosition1 - input[0].worldPosition);
+                fixed toLightDistance1 = length(_LightSourcePosition1 - input[1].worldPosition);
+                fixed toLightDistance2 = length(_LightSourcePosition1 - input[2].worldPosition);
                 // Cast shadows only if we have all vertices within the radius of the light
-                castShadows = (lightSourcesArr[lNumber].radius - toLightDistance0) > 0 && 
-                    (lightSourcesArr[lNumber].radius - toLightDistance1) > 0 &&
-                    (lightSourcesArr[lNumber].radius - toLightDistance2) > 0;
+                castShadows = (_LightSourceRadius1 - toLightDistance0) > 0 && 
+                    (_LightSourceRadius1 - toLightDistance1) > 0 &&
+                    (_LightSourceRadius1 - toLightDistance2) > 0;
 
                 // Cast shadows only if it is within the light's radius
                 if (castShadows)
@@ -215,16 +200,16 @@ Shader "Unlit/ShadowVolumeObjects"
                             );
 
                         // Get the distance to light
-                        fixed toLightDistance = length(lightSourcesArr[lNumber].position - worldPos);
+                        fixed toLightDistance = length(_LightSourcePosition1 - worldPos);
                         // Calculate the displacement of the shadow vertices 
-                        fixed shadowBackCapDisplacement = lightSourcesArr[lNumber].radius - toLightDistance;
+                        fixed shadowBackCapDisplacement = _LightSourceRadius1 - toLightDistance;
 
                         vert = frontCap[i];
-                        fixed3 fromLightDirection = normalize(worldPos - lightSourcesArr[lNumber].position.xyz);
+                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition1.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (lightSourcesArr[lNumber].radius - toLightDistance) / worldScale.x;
-                        vert.y = vert.y + fromLightDirection.y * (lightSourcesArr[lNumber].radius - toLightDistance) / worldScale.y;
-                        vert.z = vert.z + fromLightDirection.z * (lightSourcesArr[lNumber].radius - toLightDistance) / worldScale.z;
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius1 - toLightDistance) / worldScale.x;
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius1 - toLightDistance) / worldScale.y;
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius1 - toLightDistance) / worldScale.z;
 
                         backCap[i] = vert;
                     }
@@ -336,7 +321,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         //ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
 
                         // Compute direction from vertices to light
-                        lds[0] = lightSourcesArr[lNumber].position.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
+                        lds[0] = _LightSourcePosition1.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
                         //lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
                         //lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
 
@@ -448,32 +433,16 @@ Shader "Unlit/ShadowVolumeObjects"
             // The object to retur
             sg2f o;
 
-            // Don't continue if there is only one shadow
+            // Don't continue if there is only one shadow, else create the second shadow
             if (_LightSourcesAmount > 1)
             {
-                // This is the second shadow in the array
-                int lNumber = 1;
-
-                // Save the light sources in an array
-                lightSourceObject lightSourcesArr[2];
-                if (_LightSourcesAmount > 0)
-                {
-                    lightSourcesArr[0].position = _LightSourcePosition1;
-                    lightSourcesArr[0].radius = _LightSourceRadius1;
-                }
-                else if (_LightSourcesAmount > 1) // there is a maximum of 2 light sources
-                {
-                    lightSourcesArr[1].position = _LightSourcePosition2;
-                    lightSourcesArr[1].radius = _LightSourceRadius2;
-                }
-
                 // Calculate normals for each vertex
                 ns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
                 //ns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
                 //ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
 
                 // Compute direction from vertices to light
-                lds[0] = lightSourcesArr[lNumber].position - input[0].worldPosition;
+                lds[0] = _LightSourcePosition2 - input[0].worldPosition;
                 //lds[1] = _LightSourcePosition - input[1].worldPosition;
                 //lds[2] = _LightSourcePosition - input[2].worldPosition;
 
@@ -493,13 +462,13 @@ Shader "Unlit/ShadowVolumeObjects"
                 }
 
                 // Get the distance to light for all verices
-                fixed toLightDistance0 = length(lightSourcesArr[lNumber].position - input[0].worldPosition);
-                fixed toLightDistance1 = length(lightSourcesArr[lNumber].position - input[1].worldPosition);
-                fixed toLightDistance2 = length(lightSourcesArr[lNumber].position - input[2].worldPosition);
+                fixed toLightDistance0 = length(_LightSourcePosition2 - input[0].worldPosition);
+                fixed toLightDistance1 = length(_LightSourcePosition2 - input[1].worldPosition);
+                fixed toLightDistance2 = length(_LightSourcePosition2 - input[2].worldPosition);
                 // Cast shadows only if we have all vertices within the radius of the light
-                castShadows = (lightSourcesArr[lNumber].radius - toLightDistance0) > 0 && 
-                    (lightSourcesArr[lNumber].radius - toLightDistance1) > 0 &&
-                    (lightSourcesArr[lNumber].radius - toLightDistance2) > 0;
+                castShadows = (_LightSourceRadius2 - toLightDistance0) > 0 && 
+                    (_LightSourceRadius2 - toLightDistance1) > 0 &&
+                    (_LightSourceRadius2 - toLightDistance2) > 0;
 
                 // Cast shadows only if it is within the light's radius
                 if (castShadows)
@@ -538,16 +507,16 @@ Shader "Unlit/ShadowVolumeObjects"
                             );
 
                         // Get the distance to light
-                        fixed toLightDistance = length(lightSourcesArr[lNumber].position - worldPos);
+                        fixed toLightDistance = length(_LightSourcePosition2 - worldPos);
                         // Calculate the displacement of the shadow vertices 
-                        fixed shadowBackCapDisplacement = lightSourcesArr[lNumber].radius - toLightDistance;
+                        fixed shadowBackCapDisplacement = _LightSourceRadius2 - toLightDistance;
 
                         vert = frontCap[i];
-                        fixed3 fromLightDirection = normalize(worldPos - lightSourcesArr[lNumber].position.xyz);
+                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition2.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (lightSourcesArr[lNumber].radius - toLightDistance) / worldScale.x;
-                        vert.y = vert.y + fromLightDirection.y * (lightSourcesArr[lNumber].radius - toLightDistance) / worldScale.y;
-                        vert.z = vert.z + fromLightDirection.z * (lightSourcesArr[lNumber].radius - toLightDistance) / worldScale.z;
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius2 - toLightDistance) / worldScale.x;
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius2 - toLightDistance) / worldScale.y;
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius2 - toLightDistance) / worldScale.z;
 
                         backCap[i] = vert;
                     }
@@ -659,7 +628,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         //ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
 
                         // Compute direction from vertices to light
-                        lds[0] = lightSourcesArr[lNumber].position.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
+                        lds[0] = _LightSourcePosition2.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
                         //lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
                         //lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
 
