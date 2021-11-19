@@ -716,16 +716,25 @@ Shader "Unlit/ShadowVolumeObjects"
 
             fixed4 frag (g2f i) : SV_Target
             {
-                // Calculate the amount of light falling on the pixel
+                // Answer to return
+                fixed4 answer = (0,0,0,0);
+
+                // Values to calculate the diffuse based on
                 fixed3 lightDirection = normalize(-i.worldPosition + _LightSourcePosition1.xyz);
                 fixed intensity = max(dot(lightDirection, i.worldNormal), 0);
-                
-                // TODO adjust the diffuse based on the light's radius value
-
-                // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
-                return col;
+                answer += col;
 
+                // If there is another light source add it to the answer
+                if (_LightSourcesAmount >=2)
+                {
+                    // Values to calculate the diffuse based on
+                    lightDirection = normalize(-i.worldPosition + _LightSourcePosition2.xyz);
+                    intensity = max(dot(lightDirection, i.worldNormal), 0);
+                    col = tex2D(_MainTex, i.uv) * _Color * intensity;
+                    answer = (answer + col);
+                }
+                return answer;
             }
             ENDCG
         }
