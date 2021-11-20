@@ -27,6 +27,8 @@ public class ShadowCastingObject : MonoBehaviour
     private Mesh meshComponent = null;
     // Light Source
     [SerializeField] private CustomLightingManager lightSources = null;
+    // The initial bounds of the object
+    private Bounds initialBounds;
 
     void Start()
     {
@@ -40,6 +42,8 @@ public class ShadowCastingObject : MonoBehaviour
         UpdateAdjTrianglesBuffer();
         // Save the number of triangles
         renderer.material.SetInt("_MeshTrianglesNumber", (meshComponent.triangles.Length / 3));
+        // Save the initial bounds
+        initialBounds = meshComponent.bounds;
     }
 
     private void Update()
@@ -48,10 +52,10 @@ public class ShadowCastingObject : MonoBehaviour
         UpdateTheBounds();
     }
 
-    // Update the bounds to include the shadow
+    // Update the bounds to include all the shadows
     private void UpdateTheBounds()
     {
-        Bounds newBounds = meshComponent.bounds;
+        Bounds newBounds = initialBounds;
 
         float radius0 = lightSources.GetRadiuses()[0];
         Vector3 position0 = lightSources.GetLightSourcePositions()[0];
@@ -61,12 +65,13 @@ public class ShadowCastingObject : MonoBehaviour
         float displacement = (radius0 - toLightDistance);
         Vector3 fromLightDirection = (transform.position - position0).normalized;
         Vector3 newWorldCenter = transform.position + (fromLightDirection * displacement / 2);
+        newBounds.center = (newWorldCenter - transform.position);
 
         // Calculate the extends
         Vector3 furtherestPoint = transform.position + fromLightDirection * 
-            (Mathf.Sqrt(Mathf.Pow(meshComponent.bounds.extents.x, 2) 
-            + Mathf.Pow(meshComponent.bounds.extents.y, 2) 
-            + Mathf.Pow(meshComponent.bounds.extents.z, 2)));
+            (Mathf.Sqrt(Mathf.Pow(initialBounds.extents.x, 2) 
+            + Mathf.Pow(initialBounds.extents.y, 2) 
+            + Mathf.Pow(initialBounds.extents.z, 2)));
         furtherestPoint += (fromLightDirection * displacement);
         Vector3 newExtents;
         newExtents.x = Mathf.Abs(furtherestPoint.x - newWorldCenter.x);
