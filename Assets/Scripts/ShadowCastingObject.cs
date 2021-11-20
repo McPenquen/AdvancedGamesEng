@@ -57,26 +57,72 @@ public class ShadowCastingObject : MonoBehaviour
     {
         Bounds newBounds = initialBounds;
 
-        float radius0 = lightSources.GetRadiuses()[0];
-        Vector3 position0 = lightSources.GetLightSourcePositions()[0];
+        // Get the light info from the light manager
+        Vector3[] lightPositions = lightSources.GetLightSourcePositions();
+        float[] radiuses = lightSources.GetRadiuses();
+        int lightsAmount = lightSources.GetLightSourcePositions().Length;
 
-        // Calculate how much to move the center of the bounds
-        float toLightDistance = (position0 - transform.position).magnitude;
-        float displacement = (radius0 - toLightDistance);
-        Vector3 fromLightDirection = (transform.position - position0).normalized;
-        Vector3 newWorldCenter = transform.position + (fromLightDirection * displacement / 2);
-        newBounds.center = (newWorldCenter - transform.position);
+        // Make sure there are lights
+        if (lightsAmount <= 0)
+        {
+            return;
+        }
 
-        // Calculate the extends
-        Vector3 furtherestPoint = transform.position + fromLightDirection * 
-            (Mathf.Sqrt(Mathf.Pow(initialBounds.extents.x, 2) 
-            + Mathf.Pow(initialBounds.extents.y, 2) 
-            + Mathf.Pow(initialBounds.extents.z, 2)));
-        furtherestPoint += (fromLightDirection * displacement);
+        // Varaibles for the overall bounds
+        Vector3 averagedCenter = new Vector3(0,0,0);
+        Vector3 averagedWorldCenter = new Vector3(0,0,0);
+        Vector3[] furtherestPoints = new Vector3[lightsAmount];
+
+        // Loop throught all the lights
+        for(int i = 0; i < lightsAmount; i++)
+        {
+            // Calculate how much to move the center of the bounds
+            float toLightDistance = (lightPositions[i] - transform.position).magnitude;
+            float displacement = (radiuses[i] - toLightDistance);
+            Vector3 fromLightDirection = (transform.position - lightPositions[i]).normalized;
+            Vector3 newWorldCenter = transform.position + (fromLightDirection * displacement / 2);
+            // Add that to the averaged center
+            averagedCenter += (newWorldCenter - transform.position);
+            averagedWorldCenter += newWorldCenter;
+
+            // Calculate the extends
+            Vector3 furtherestPoint = transform.position + fromLightDirection * 
+                (Mathf.Sqrt(Mathf.Pow(initialBounds.extents.x, 2) 
+                + Mathf.Pow(initialBounds.extents.y, 2) 
+                + Mathf.Pow(initialBounds.extents.z, 2)));
+            furtherestPoint += (fromLightDirection * displacement);
+            // Save the furtherest point
+            furtherestPoints[i] = furtherestPoint;
+        }
+
+        // Find the new extends
+        averagedWorldCenter = averagedWorldCenter / lightsAmount;
+        Vector3 finalfurtherestPoint = new Vector3(0,0,0);
+        for(int i = 0; i < lightsAmount; i++)
+        {
+            // X value check
+            if ( finalfurtherestPoint.x < Mathf.Abs(furtherestPoints[i].x))
+            {
+                finalfurtherestPoint.x = Mathf.Abs(furtherestPoints[i].x);
+            }
+            // Y value check
+            if ( finalfurtherestPoint.y < Mathf.Abs(furtherestPoints[i].y))
+            {
+                finalfurtherestPoint.y = Mathf.Abs(furtherestPoints[i].y);
+            }
+            // Z value check
+            if ( finalfurtherestPoint.z < Mathf.Abs(furtherestPoints[i].z))
+            {
+                finalfurtherestPoint.z = Mathf.Abs(furtherestPoints[i].z);
+            }
+        }
+
+        // Update the final values
+        newBounds.center = averagedCenter / lightsAmount;
         Vector3 newExtents;
-        newExtents.x = Mathf.Abs(furtherestPoint.x - newWorldCenter.x);
-        newExtents.y = Mathf.Abs(furtherestPoint.y - newWorldCenter.y);
-        newExtents.z = Mathf.Abs(furtherestPoint.z - newWorldCenter.z);
+        newExtents.x = Mathf.Abs(finalfurtherestPoint.x - averagedWorldCenter.x);
+        newExtents.y = Mathf.Abs(finalfurtherestPoint.y - averagedWorldCenter.y);
+        newExtents.z = Mathf.Abs(finalfurtherestPoint.z - averagedWorldCenter.z);
         newBounds.extents = newExtents;
 
         meshComponent.bounds = newBounds;
