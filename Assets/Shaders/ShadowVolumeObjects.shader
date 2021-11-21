@@ -1109,11 +1109,11 @@ Shader "Unlit/ShadowVolumeObjects"
             Cull Back
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-            //Stencil
-            //{
-            //    Ref 1
-            //    Comp equal 
-            //}
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+            }
 
             CGPROGRAM
             #pragma vertex vert
@@ -1177,11 +1177,11 @@ Shader "Unlit/ShadowVolumeObjects"
             Cull Back
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-            //Stencil
-            //{
-            //    Ref 1
-            //    Comp equal 
-            //}
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+            }
 
             CGPROGRAM
             #pragma vertex vert
@@ -1245,11 +1245,11 @@ Shader "Unlit/ShadowVolumeObjects"
             Cull Back
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-            //Stencil
-            //{
-            //    Ref 1
-            //    Comp equal 
-            //}
+            Stencil
+            {
+                Ref 1
+                Comp equal 
+            }
 
             CGPROGRAM
             #pragma vertex vert
