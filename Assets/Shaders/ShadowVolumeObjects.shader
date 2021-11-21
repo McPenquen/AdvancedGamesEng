@@ -55,6 +55,14 @@ Shader "Unlit/ShadowVolumeObjects"
             float4 vertex5;
             float4 vertex6;
         };
+        // Material
+        struct matStruct
+        {
+            float4 emissive;
+            float4 diffuseReflection;
+            float4 specularReflection;
+            float shininess;
+        };
 
         sampler2D _MainTex;
         float4 _MainTex_ST;
@@ -1003,6 +1011,37 @@ Shader "Unlit/ShadowVolumeObjects"
                 }
             }
         }
+        // Helping function for point lighting calculations
+        float4 CalculatePointLight(float4 lightPosition, float3 fragPosition, float3 fragNormal, matStruct mat)
+        {
+            // Distance between frag and the light
+            float d = length(lightPosition - fragPosition);
+            // Light colour default - white
+            float4 lightColour = (1,1,1,1);
+            // Attenutation values
+            float constantAttenuation = 1.0;
+            float linearAttenuation = 0.22;
+            float quadraticAttenuation = 0.20;
+            // To light direction
+            float3 toLightDir = normalize(lightPosition.xyz - fragPosition.xyz);
+            // attenuation
+            float4 attenuation = lightColour / (constantAttenuation + d * linearAttenuation + d * d * quadraticAttenuation);
+            
+            // diffuse
+            float4 diffuse = attenuation * max(dot(toLightDir, fragNormal.xyz), 0) * mat.diffuseReflection;
+
+            // half vec
+            float3 halfVec = normalize(toLightDir + _WorldSpaceCameraPos.xyz);
+
+            // specular
+            float4 specular = attenuation * mat.specularReflection * pow(max(dot(fragNormal.xyz, halfVec), 0), mat.shininess);
+            
+            // Return the total
+            float4 answer = (mat.emissive + diffuse) * _Color + specular;
+            answer.w = _Color.w;
+
+            return answer;
+        }
 
     ENDCG
 
@@ -1022,31 +1061,26 @@ Shader "Unlit/ShadowVolumeObjects"
             {
                 // Answer to return
                 fixed4 answer = (0,0,0,0);
-
-                // Values to calculate the diffuse based on
-                fixed3 lightDirection = normalize(-i.worldPosition + _LightSourcePosition1.xyz);
-                fixed intensity = max(dot(lightDirection, i.worldNormal), 0);
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color * intensity;
-                answer += col;
-
-                // If there is another light source add it to the answer
-                if (_LightSourcesAmount >=2)
+                float4 lightPositions[3] = {_LightSourcePosition1, _LightSourcePosition2, _LightSourcePosition3};
+                
+                for (int j = 0; j < _LightSourcesAmount; j++)
                 {
-                    // Values to calculate the diffuse based on
-                    lightDirection = normalize(-i.worldPosition + _LightSourcePosition2.xyz);
-                    intensity = max(dot(lightDirection, i.worldNormal), 0);
-                    col = tex2D(_MainTex, i.uv) * _Color * intensity;
-                    answer = (answer + col);
-                    // There is a possibility of a 3rd light source
-                    if (_LightSourcesAmount >=3)
-                    {
-                        // Values to calculate the diffuse based on
-                        lightDirection = normalize(-i.worldPosition + _LightSourcePosition3.xyz);
-                        intensity = max(dot(lightDirection, i.worldNormal), 0);
-                        col = tex2D(_MainTex, i.uv) * _Color * intensity;
-                        answer = (answer + col);
-                    }
+                    matStruct matIn;
+                    matIn.diffuseReflection = (1,1,1,1); 
+                    matIn.emissive = (0,0,0,1); 
+                    matIn.specularReflection = (1,1,1,1);
+                    matIn.shininess = 1;
+
+                    answer += CalculatePointLight(lightPositions[j], i.worldPosition, i.worldNormal, matIn);
                 }
+                    matStruct matIn;
+                    matIn.diffuseReflection = (1,1,1,1); 
+                    matIn.emissive = (0,0,0,1); 
+                    matIn.specularReflection = (1,1,1,1);
+                    matIn.shininess = 1;
+                    answer = CalculatePointLight(lightPositions[0], i.worldPosition, i.worldNormal, matIn);
+
+
                 return answer;
             }
             ENDCG
