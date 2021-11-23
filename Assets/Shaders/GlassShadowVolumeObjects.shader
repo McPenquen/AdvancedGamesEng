@@ -1,4 +1,4 @@
-Shader "Unlit/ShadowVolumeObjects"
+Shader "Unlit/GlassShadowVolumeObjects"
 {
     Properties
     {
@@ -400,8 +400,15 @@ Shader "Unlit/ShadowVolumeObjects"
         // The shadow fragment shader
         fixed4 shadowFrag (sg2f i) : SV_Target
         {
+            // Adjust the shadow colour to account for the transparency of the object
+            float4 returnColour = _ShadowColor;
+            returnColour.w = 0.5 - (1.0 - 0.2 - _Color.w);
+            if (returnColour.w < 0.05)
+            {
+                returnColour.w = 0.05;
+            }
             // Return shadow color
-            return _ShadowColor;
+            return returnColour;
         }
 
         // The geometry shader for the 2nd shadow
@@ -1010,8 +1017,10 @@ Shader "Unlit/ShadowVolumeObjects"
     {
         Pass
         {
-            Tags { "RenderType"="Geometry" }
+            Tags { "RenderType"="Transparent" }
             LOD 100
+            Blend SrcAlpha OneMinusSrcAlpha
+
 
             CGPROGRAM
             #pragma vertex vert
@@ -1047,6 +1056,7 @@ Shader "Unlit/ShadowVolumeObjects"
                         answer = (answer + col);
                     }
                 }
+                answer.w = _Color.w;
                 return answer;
             }
             ENDCG
