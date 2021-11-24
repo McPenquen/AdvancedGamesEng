@@ -10,7 +10,6 @@ Shader "Unlit/GlassShadowVolumeObjects"
         _LightSourceRadius2 ("Light source radius 2", Float) = -1
         _LightSourcePosition3 ("Light Source Position 3", Vector) = (-1, -1 ,-1, -1)
         _LightSourceRadius3 ("Light source radius 3", Float) = -1 
-        _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _MeshTrianglesNumber ("Number of triangles in the mesh", Int) = 6
         _LightSourcesAmount ("Number of light sources", Int) = 3
     }
@@ -62,7 +61,6 @@ Shader "Unlit/GlassShadowVolumeObjects"
         fixed4 _LightSourcePosition1;
         fixed4 _LightSourcePosition2;
         fixed4 _LightSourcePosition3;
-        fixed4 _ShadowColor;
         fixed _LightSourceRadius1;
         fixed _LightSourceRadius2;
         fixed _LightSourceRadius3;
@@ -401,11 +399,11 @@ Shader "Unlit/GlassShadowVolumeObjects"
         fixed4 shadowFrag (sg2f i) : SV_Target
         {
             // Adjust the shadow colour to account for the transparency of the object
-            float4 returnColour = _ShadowColor;
+            float4 returnColour = _Color;
             returnColour.w = 0.5 - (1.0 - 0.2 - _Color.w);
-            if (returnColour.w < 0.05)
+            if (returnColour.w < 0.0)
             {
-                returnColour.w = 0.05;
+                returnColour.w = 0.0;
             }
             // Return shadow color
             return returnColour;
@@ -1017,7 +1015,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
     {
         Pass
         {
-            Tags { "RenderType"="Transparent" }
+            Tags { "RenderType"="Transparent" "Queue"="Transparent"}
             LOD 100
             Blend SrcAlpha OneMinusSrcAlpha
 
@@ -1068,7 +1066,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow pass 1
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-2" }
             LOD 100
 
             Cull Front
@@ -1090,7 +1088,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow pass 2
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-2" }
             LOD 100
 
             Cull Back
@@ -1113,7 +1111,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow Pass 3 - show the image
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-1" }
             LOD 100
 
             Cull Back
@@ -1136,7 +1134,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow pass 1
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-2" }
             LOD 100
 
             Cull Front
@@ -1158,7 +1156,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow pass 2
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-2" }
             LOD 100
 
             Cull Back
@@ -1181,7 +1179,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow Pass 3 - show the image
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-1" }
             LOD 100
 
             Cull Back
@@ -1204,7 +1202,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow pass 1
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-2" }
             LOD 100
 
             Cull Front
@@ -1226,7 +1224,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow pass 2
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-2" }
             LOD 100
 
             Cull Back
@@ -1249,7 +1247,7 @@ Shader "Unlit/GlassShadowVolumeObjects"
         // Shadow Pass 3 - show the image
         Pass
         {
-            Tags { "RenderType"="Transparent" "Queue"="Geometry+1" }
+            Tags { "RenderType"="Transparent" "Queue"="Geometry-1" }
             LOD 100
 
             Cull Back

@@ -51,6 +51,10 @@ public class ShadowCastingObject : MonoBehaviour
         // Change the extents so it includes the shadow
         UpdateTheBounds();
     }
+    private void OnRenderObject()
+    {
+        GL.Clear(true, false, Color.black);
+    }
 
     // Update the bounds to include all the shadows
     private void UpdateTheBounds()
