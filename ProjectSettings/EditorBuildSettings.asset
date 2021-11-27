@@ -5,7 +5,22 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 1
     path: Assets/Scenes/DevelopmentScene.unity
-    guid: 9fc0d4010bbf28b4594072e72b8655ab
+    guid: 98a799c9563dd4340ac6d43dad55ebf9
+  - enabled: 1
+    path: Assets/Scenes/MultipleLightSourcesScene.unity
+    guid: bc7ea89d08bcf1148b92f7e8cf3cb4e4
+  - enabled: 1
+    path: Assets/Scenes/ComplexObjectsScene.unity
+    guid: 5d4139387c49f4041821b3d34ac4d39f
+  - enabled: 1
+    path: Assets/Scenes/GlassObjectsScene.unity
+    guid: 5719fe11f14da6843ab034da29d98e6b
+  - enabled: 1
+    path: Assets/Scenes/ColouredGlassScene.unity
+    guid: bd24561a3b7139640a9d851364980654
   m_configObjects: {}
