@@ -34,26 +34,31 @@ public class GameManager : MonoBehaviour
         {
             Application.Quit();
         }
-        // Else navigate between scenes by numbers 1-5 -> scene switch
+        // Else navigate between scenes by numbers 1-5 -> scene switch, tell the movement manager about scene switching
         else if (Input.GetKeyDown(KeyCode.Keypad1) || Input.GetKeyDown(KeyCode.Alpha1))
         {
             SceneManager.LoadScene("DevelopmentScene");
+            MovementManager.SetIsStarting(true);
         }
         else if (Input.GetKeyDown(KeyCode.Keypad2) || Input.GetKeyDown(KeyCode.Alpha2))
         {
             SceneManager.LoadScene("MultipleLightSourcesScene");
+            MovementManager.SetIsStarting(true);
         }
         else if (Input.GetKeyDown(KeyCode.Keypad3) || Input.GetKeyDown(KeyCode.Alpha3))
         {
             SceneManager.LoadScene("ComplexObjectsScene");
+            MovementManager.SetIsStarting(true);
         }
         else if (Input.GetKeyDown(KeyCode.Keypad4) || Input.GetKeyDown(KeyCode.Alpha4))
         {
             SceneManager.LoadScene("GlassObjectsScene");
+            MovementManager.SetIsStarting(true);
         }
         else if (Input.GetKeyDown(KeyCode.Keypad5) || Input.GetKeyDown(KeyCode.Alpha5))
         {
             SceneManager.LoadScene("ColouredGlassScene");
+            MovementManager.SetIsStarting(true);
         }
     }
 }

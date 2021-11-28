@@ -51,10 +51,6 @@ public class ShadowCastingObject : MonoBehaviour
         // Change the extents so it includes the shadow
         UpdateTheBounds();
     }
-    private void OnRenderObject()
-    {
-        GL.Clear(true, false, Color.black);
-    }
 
     // Update the bounds to include all the shadows
     private void UpdateTheBounds()
@@ -83,18 +79,17 @@ public class ShadowCastingObject : MonoBehaviour
             // Calculate how much to move the center of the bounds
             float toLightDistance = (lightPositions[i] - transform.position).magnitude;
             float displacement = (radiuses[i] - toLightDistance);
+            float centre2CornerDistance = (Mathf.Sqrt(Mathf.Pow(initialBounds.extents.x, 2) 
+                + Mathf.Pow(initialBounds.extents.y, 2) 
+                + Mathf.Pow(initialBounds.extents.z, 2)));
             Vector3 fromLightDirection = (transform.position - lightPositions[i]).normalized;
-            Vector3 newWorldCenter = transform.position + (fromLightDirection * displacement / 2);
+            Vector3 newWorldCenter = transform.position + (fromLightDirection * (displacement - centre2CornerDistance) / 2);
             // Add that to the averaged center
             averagedCenter += (newWorldCenter - transform.position);
             averagedWorldCenter += newWorldCenter;
 
             // Calculate the extends
-            Vector3 furtherestPoint = transform.position + fromLightDirection * 
-                (Mathf.Sqrt(Mathf.Pow(initialBounds.extents.x, 2) 
-                + Mathf.Pow(initialBounds.extents.y, 2) 
-                + Mathf.Pow(initialBounds.extents.z, 2)));
-            furtherestPoint += (fromLightDirection * displacement);
+            Vector3 furtherestPoint = transform.position + fromLightDirection * displacement;
             // Save the furtherest point
             furtherestPoints[i] = furtherestPoint;
         }
@@ -104,31 +99,27 @@ public class ShadowCastingObject : MonoBehaviour
         Vector3 finalfurtherestPoint = new Vector3(0,0,0);
         for(int i = 0; i < lightsAmount; i++)
         {
+            Vector3 checkedVector = furtherestPoints[i] - averagedWorldCenter;
             // X value check
-            if ( finalfurtherestPoint.x < Mathf.Abs(furtherestPoints[i].x))
+            if ( finalfurtherestPoint.x < Mathf.Abs(checkedVector.x))
             {
-                finalfurtherestPoint.x = Mathf.Abs(furtherestPoints[i].x);
+                finalfurtherestPoint.x = Mathf.Abs(checkedVector.x);
             }
             // Y value check
-            if ( finalfurtherestPoint.y < Mathf.Abs(furtherestPoints[i].y))
+            if ( finalfurtherestPoint.y < Mathf.Abs(checkedVector.y))
             {
-                finalfurtherestPoint.y = Mathf.Abs(furtherestPoints[i].y);
+                finalfurtherestPoint.y = Mathf.Abs(checkedVector.y);
             }
             // Z value check
-            if ( finalfurtherestPoint.z < Mathf.Abs(furtherestPoints[i].z))
+            if ( finalfurtherestPoint.z < Mathf.Abs(checkedVector.z))
             {
-                finalfurtherestPoint.z = Mathf.Abs(furtherestPoints[i].z);
+                finalfurtherestPoint.z = Mathf.Abs(checkedVector.z);
             }
         }
 
         // Update the final values
         newBounds.center = averagedCenter / lightsAmount;
-        Vector3 newExtents;
-        newExtents.x = Mathf.Abs(finalfurtherestPoint.x - averagedWorldCenter.x);
-        newExtents.y = Mathf.Abs(finalfurtherestPoint.y - averagedWorldCenter.y);
-        newExtents.z = Mathf.Abs(finalfurtherestPoint.z - averagedWorldCenter.z);
-        newBounds.extents = newExtents;
-
+        newBounds.extents = finalfurtherestPoint;
         meshComponent.bounds = newBounds;
     }
 

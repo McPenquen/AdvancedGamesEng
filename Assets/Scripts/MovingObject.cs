@@ -11,9 +11,9 @@ public class MovingObject : MonoBehaviour
     [SerializeField] public bool isPlayer = false;
 
     // Method to switch isMoving to the other state
-    public void SwitchMovingController()
+    public void SwitchMovingController(bool b)
     {
-        isMoving = !isMoving;
+        isMoving = b;
     }
 
     // Detect Movement and move
