@@ -1446,13 +1446,17 @@ PrefabInstance:
       propertyPath: lightSources
       value: 
       objectReference: {fileID: 1596849057}
+    - target: {fileID: 2694886317584688093, guid: e4629c6705fe99147bd70406228d5128, type: 3}
+      propertyPath: boundsVisualisationObj
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2694886317584688094, guid: e4629c6705fe99147bd70406228d5128, type: 3}
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
     - target: {fileID: 2694886317584688095, guid: e4629c6705fe99147bd70406228d5128, type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 2694886317584688095, guid: e4629c6705fe99147bd70406228d5128, type: 3}
       propertyPath: m_LocalScale.z

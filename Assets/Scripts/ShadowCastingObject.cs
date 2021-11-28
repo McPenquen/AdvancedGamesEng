@@ -71,7 +71,7 @@ public class ShadowCastingObject : MonoBehaviour
         // Varaibles for the overall bounds
         Vector3 averagedCenter = new Vector3(0,0,0);
         Vector3 averagedWorldCenter = new Vector3(0,0,0);
-        Vector3[] furtherestPoints = new Vector3[lightsAmount];
+        Vector3[] furtherestPoints = new Vector3[lightsAmount+2];
 
         // Loop throught all the lights
         for(int i = 0; i < lightsAmount; i++)
@@ -93,6 +93,10 @@ public class ShadowCastingObject : MonoBehaviour
             // Save the furtherest point
             furtherestPoints[i] = furtherestPoint;
         }
+
+        // Add there also the object as the possible furtherest points
+        furtherestPoints[lightsAmount] = initialBounds.max;
+        furtherestPoints[lightsAmount+1] = initialBounds.min;
 
         // Find the new extends
         averagedWorldCenter = averagedWorldCenter / lightsAmount;

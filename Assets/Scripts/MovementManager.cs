@@ -12,12 +12,6 @@ public class MovementManager : MonoBehaviour
     // Counter for the starting of the scene
     private float startingCounter = 0;
 
-    void Start()
-    {
-        // Initiate the 0 box as the active one
-        uiMovementIndicators[currentMovingObject].ChangeActiveStatus(true);
-        movingObjects[currentMovingObject].SwitchMovingController(true);
-    }
     void Update()
     {
         // Check if this is the first time this is run after a scene switch
@@ -25,7 +19,7 @@ public class MovementManager : MonoBehaviour
         {
             // The loading needs some time, bug
             startingCounter += Time.deltaTime;
-            if (startingCounter < 5)
+            if (startingCounter > 1)
             {
                 startingCounter = 0;
                 isStarting = false;
@@ -37,7 +31,7 @@ public class MovementManager : MonoBehaviour
         }
 
         // Key P will switch between the objects
-        if (Input.GetKeyDown(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.P) && startingCounter == 0.0f)
         {
             // Update the id to the next index
             int newId = (currentMovingObject + 1) % movingObjects.Length;
