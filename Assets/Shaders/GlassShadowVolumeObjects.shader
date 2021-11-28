@@ -108,6 +108,8 @@ Shader "Unlit/GlassShadowVolumeObjects"
             float4 backCap[3];
             // Centroid of the front cap
             float4 frontCentroid = (0,0,0,0);
+            // World positions
+            float3 worldFrontCap[3];
 
             // To the light directions
             float3 lds[3];
@@ -182,7 +184,12 @@ Shader "Unlit/GlassShadowVolumeObjects"
                     {
                         triStream.RestartStrip();
                     }
-                    
+
+                    // Get world positions for the front cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        worldFrontCap[i] = mul(unity_ObjectToWorld, frontCap[i]).xyz;
+                    }
 
                     // Calculate centroid of the front cap triangle
                     frontCentroid.x = (frontCap[0].x + frontCap[1].x + frontCap[2].x) / 3;
@@ -192,28 +199,19 @@ Shader "Unlit/GlassShadowVolumeObjects"
                     // Then the back cap
                     for (int i = 0; i < 3; i++)
                     {
-                        // World position
-                        fixed3 worldPos = mul(unity_ObjectToWorld, frontCap[i]).xyz;
-                        // Get scale
-                        float3 worldScale = float3(
-                            length(float3(unity_ObjectToWorld[0].x, unity_ObjectToWorld[1].x, unity_ObjectToWorld[2].x)), // scale x axis
-                            length(float3(unity_ObjectToWorld[0].y, unity_ObjectToWorld[1].y, unity_ObjectToWorld[2].y)), // scale y axis
-                            length(float3(unity_ObjectToWorld[0].z, unity_ObjectToWorld[1].z, unity_ObjectToWorld[2].z))  // scale z axis
-                            );
-
                         // Get the distance to light
-                        fixed toLightDistance = length(_LightSourcePosition1 - worldPos);
+                        fixed toLightDistance = length(_LightSourcePosition1 - worldFrontCap[i]);
                         // Calculate the displacement of the shadow vertices 
                         fixed shadowBackCapDisplacement = _LightSourceRadius1 - toLightDistance;
 
-                        vert = frontCap[i];
-                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition1.xyz);
+                        vert.xyz = worldFrontCap[i];
+                        fixed3 fromLightDirection = normalize(worldFrontCap[i] - _LightSourcePosition1.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius1 - toLightDistance) / worldScale.x;
-                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius1 - toLightDistance) / worldScale.y;
-                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius1 - toLightDistance) / worldScale.z;
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius1 - toLightDistance);
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius1 - toLightDistance);
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius1 - toLightDistance);
 
-                        backCap[i] = vert;
+                        backCap[i] = mul( unity_WorldToObject, vert);
                     }
                     // Generate the far/back cap away from the light
                     if (isFacingLight) // Only for the vertices facing light
@@ -422,6 +420,8 @@ Shader "Unlit/GlassShadowVolumeObjects"
             float4 backCap[3];
             // Centroid of the front cap
             float4 frontCentroid = (0,0,0,0);
+            // World positions
+            float3 worldFrontCap[3];
 
             // To the light directions
             float3 lds[3];
@@ -496,7 +496,12 @@ Shader "Unlit/GlassShadowVolumeObjects"
                     {
                         triStream.RestartStrip();
                     }
-                    
+
+                    // Get world positions for the front cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        worldFrontCap[i] = mul(unity_ObjectToWorld, frontCap[i]).xyz;
+                    }
 
                     // Calculate centroid of the front cap triangle
                     frontCentroid.x = (frontCap[0].x + frontCap[1].x + frontCap[2].x) / 3;
@@ -506,28 +511,19 @@ Shader "Unlit/GlassShadowVolumeObjects"
                     // Then the back cap
                     for (int i = 0; i < 3; i++)
                     {
-                        // World position
-                        fixed3 worldPos = mul(unity_ObjectToWorld, frontCap[i]).xyz;
-                        // Get scale
-                        float3 worldScale = float3(
-                            length(float3(unity_ObjectToWorld[0].x, unity_ObjectToWorld[1].x, unity_ObjectToWorld[2].x)), // scale x axis
-                            length(float3(unity_ObjectToWorld[0].y, unity_ObjectToWorld[1].y, unity_ObjectToWorld[2].y)), // scale y axis
-                            length(float3(unity_ObjectToWorld[0].z, unity_ObjectToWorld[1].z, unity_ObjectToWorld[2].z))  // scale z axis
-                            );
-
                         // Get the distance to light
-                        fixed toLightDistance = length(_LightSourcePosition2 - worldPos);
+                        fixed toLightDistance = length(_LightSourcePosition2 - worldFrontCap[i]);
                         // Calculate the displacement of the shadow vertices 
                         fixed shadowBackCapDisplacement = _LightSourceRadius2 - toLightDistance;
 
-                        vert = frontCap[i];
-                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition2.xyz);
+                        vert.xyz = worldFrontCap[i];
+                        fixed3 fromLightDirection = normalize(worldFrontCap[i] - _LightSourcePosition2.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius2 - toLightDistance) / worldScale.x;
-                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius2 - toLightDistance) / worldScale.y;
-                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius2 - toLightDistance) / worldScale.z;
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius2 - toLightDistance);
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius2 - toLightDistance);
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius2 - toLightDistance);
 
-                        backCap[i] = vert;
+                        backCap[i] = mul( unity_WorldToObject, vert);
                     }
                     // Generate the far/back cap away from the light
                     if (isFacingLight) // Only for the vertices facing light
@@ -722,6 +718,8 @@ Shader "Unlit/GlassShadowVolumeObjects"
             float4 backCap[3];
             // Centroid of the front cap
             float4 frontCentroid = (0,0,0,0);
+            // World positions
+            float3 worldFrontCap[3];
 
             // To the light directions
             float3 lds[3];
@@ -796,7 +794,12 @@ Shader "Unlit/GlassShadowVolumeObjects"
                     {
                         triStream.RestartStrip();
                     }
-                    
+
+                    // Get world positions for the front cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        worldFrontCap[i] = mul(unity_ObjectToWorld, frontCap[i]).xyz;
+                    }
 
                     // Calculate centroid of the front cap triangle
                     frontCentroid.x = (frontCap[0].x + frontCap[1].x + frontCap[2].x) / 3;
@@ -806,28 +809,19 @@ Shader "Unlit/GlassShadowVolumeObjects"
                     // Then the back cap
                     for (int i = 0; i < 3; i++)
                     {
-                        // World position
-                        fixed3 worldPos = mul(unity_ObjectToWorld, frontCap[i]).xyz;
-                        // Get scale
-                        float3 worldScale = float3(
-                            length(float3(unity_ObjectToWorld[0].x, unity_ObjectToWorld[1].x, unity_ObjectToWorld[2].x)), // scale x axis
-                            length(float3(unity_ObjectToWorld[0].y, unity_ObjectToWorld[1].y, unity_ObjectToWorld[2].y)), // scale y axis
-                            length(float3(unity_ObjectToWorld[0].z, unity_ObjectToWorld[1].z, unity_ObjectToWorld[2].z))  // scale z axis
-                            );
-
                         // Get the distance to light
-                        fixed toLightDistance = length(_LightSourcePosition3 - worldPos);
+                        fixed toLightDistance = length(_LightSourcePosition3 - worldFrontCap[i]);
                         // Calculate the displacement of the shadow vertices 
                         fixed shadowBackCapDisplacement = _LightSourceRadius3 - toLightDistance;
 
-                        vert = frontCap[i];
-                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition3.xyz);
+                        vert.xyz = worldFrontCap[i];
+                        fixed3 fromLightDirection = normalize(worldFrontCap[i] - _LightSourcePosition3.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius3 - toLightDistance) / worldScale.x;
-                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius3 - toLightDistance) / worldScale.y;
-                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius3 - toLightDistance) / worldScale.z;
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius3 - toLightDistance);
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius3 - toLightDistance);
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius3 - toLightDistance);
 
-                        backCap[i] = vert;
+                        backCap[i] = mul( unity_WorldToObject, vert);
                     }
                     // Generate the far/back cap away from the light
                     if (isFacingLight) // Only for the vertices facing light
