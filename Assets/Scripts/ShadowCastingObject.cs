@@ -50,6 +50,9 @@ public class ShadowCastingObject : MonoBehaviour
     {
         // Change the extents so it includes the shadow
         UpdateTheBounds();
+
+        Vector3 rotation = transform.rotation.eulerAngles;
+        renderer.material.SetVector("_ObjectRotation", rotation);
     }
 
     // Update the bounds to include all the shadows

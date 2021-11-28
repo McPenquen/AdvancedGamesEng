@@ -13,6 +13,7 @@ Shader "Unlit/ShadowVolumeObjects"
         _ShadowColor ("Shadow color", Color) = (0,0,0,0.5)
         _MeshTrianglesNumber ("Number of triangles in the mesh", Int) = 6
         _LightSourcesAmount ("Number of light sources", Int) = 3
+        _ObjectRotation ("Rotation of the object", Vector) = (-1, -1 ,-1, -1)
     }
 
     CGINCLUDE
@@ -68,6 +69,7 @@ Shader "Unlit/ShadowVolumeObjects"
         fixed _LightSourceRadius3;
         int _MeshTrianglesNumber;
         int _LightSourcesAmount;
+        float4 _ObjectRotation;
 
         StructuredBuffer<adjTrianglesStruct> adjTriangles;
 
@@ -110,6 +112,8 @@ Shader "Unlit/ShadowVolumeObjects"
             float4 backCap[3];
             // Centroid of the front cap
             float4 frontCentroid = (0,0,0,0);
+            // World positions
+            float3 worldFrontCap[3];
 
             // To the light directions
             float3 lds[3];
@@ -127,19 +131,27 @@ Shader "Unlit/ShadowVolumeObjects"
             // Vector used for calculation
             float4 tempVec;
 
+            // Light
+            float4 lightObjPos;
+
             // The object to retur
             sg2f o;
 
             // Continue if we have more than 1 light sources - create the 1st shadow
             if (_LightSourcesAmount > 0)
             {
+                // Light source position in the obj space
+                lightObjPos = mul(unity_WorldToObject, _LightSourcePosition1);
+
                 // Calculate normals for each vertex
                 ns[0] = cross(input[1].vertex - input[0].vertex, input[2].vertex - input[0].vertex);
                 //ns[1] = cross(input[0].vertex - input[1].vertex, input[2].vertex - input[1].vertex);
                 //ns[2] = cross(input[0].vertex - input[2].vertex, input[1].vertex - input[2].vertex);
 
                 // Compute direction from vertices to light
-                lds[0] = _LightSourcePosition1 - input[0].worldPosition;
+                lds[0] = lightObjPos - input[0].vertex;
+                
+                //lds[0] = _LightSourcePosition1 - input[0].worldPosition;
                 //lds[1] = _LightSourcePosition - input[1].worldPosition;
                 //lds[2] = _LightSourcePosition - input[2].worldPosition;
 
@@ -185,8 +197,14 @@ Shader "Unlit/ShadowVolumeObjects"
                         triStream.RestartStrip();
                     }
                     
+                    // Get world positions for the front cap
+                    for (int i = 0; i < 3; i++)
+                    {
+                        worldFrontCap[i] = mul(unity_ObjectToWorld, frontCap[i]).xyz;
+                    }
 
                     // Calculate centroid of the front cap triangle
+                    //frontCentroid = (worldFrontCap[0] + worldFrontCap[1] + worldFrontCap[2]) / 3;
                     frontCentroid.x = (frontCap[0].x + frontCap[1].x + frontCap[2].x) / 3;
                     frontCentroid.y = (frontCap[0].y + frontCap[1].y + frontCap[2].y) / 3;
                     frontCentroid.z = (frontCap[0].z + frontCap[1].z + frontCap[2].z) / 3;
@@ -194,8 +212,6 @@ Shader "Unlit/ShadowVolumeObjects"
                     // Then the back cap
                     for (int i = 0; i < 3; i++)
                     {
-                        // World position
-                        fixed3 worldPos = mul(unity_ObjectToWorld, frontCap[i]).xyz;
                         // Get scale
                         float3 worldScale = float3(
                             length(float3(unity_ObjectToWorld[0].x, unity_ObjectToWorld[1].x, unity_ObjectToWorld[2].x)), // scale x axis
@@ -204,18 +220,39 @@ Shader "Unlit/ShadowVolumeObjects"
                             );
 
                         // Get the distance to light
-                        fixed toLightDistance = length(_LightSourcePosition1 - worldPos);
+                        fixed toLightDistance = length(_LightSourcePosition1 - worldFrontCap[i]);
                         // Calculate the displacement of the shadow vertices 
                         fixed shadowBackCapDisplacement = _LightSourceRadius1 - toLightDistance;
 
-                        vert = frontCap[i];
-                        fixed3 fromLightDirection = normalize(worldPos - _LightSourcePosition1.xyz);
+                        vert.xyz = worldFrontCap[i];
+                        //fixed3 fromLightDirection = normalize(frontCap[i] - lightObjPos.xyz);
+                        fixed3 fromLightDirection = normalize(worldFrontCap[i] - _LightSourcePosition1.xyz);
 
-                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius1 - toLightDistance) / worldScale.x;
-                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius1 - toLightDistance) / worldScale.y;
-                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius1 - toLightDistance) / worldScale.z;
+                        //vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius1 - toLightDistance) / worldScale.x;
+                        //vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius1 - toLightDistance) / worldScale.y;
+                        //vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius1 - toLightDistance) / worldScale.z;
 
-                        backCap[i] = vert;
+                        vert.x = vert.x + fromLightDirection.x * (_LightSourceRadius1 - toLightDistance);
+                        vert.y = vert.y + fromLightDirection.y * (_LightSourceRadius1 - toLightDistance);
+                        vert.z = vert.z + fromLightDirection.z * (_LightSourceRadius1 - toLightDistance);
+/*
+                        // Rotate about z axis
+                        float x = vert.x;
+                        float y = vert.y;
+                        vert.x = x * cos(_ObjectRotation.z) - y * sin(_ObjectRotation.z);
+                        vert.y = y * cos(_ObjectRotation.z) + x * sin(_ObjectRotation.z);
+                        // Rotate about x axis
+                        float z = vert.z;
+                        y = vert.y;
+                        vert.z = z * cos(_ObjectRotation.x) + y * sin(_ObjectRotation.x);
+                        vert.y = y * cos(_ObjectRotation.x) - z * sin(_ObjectRotation.x);
+                        // Rotate about y axis
+                        x = vert.x;
+                        z = vert.z;
+                        vert.x = x * cos(_ObjectRotation.y) + z * sin(_ObjectRotation.y);
+                        vert.z = z * cos(_ObjectRotation.y) - x * sin(_ObjectRotation.y);
+*/
+                        backCap[i] = mul(unity_WorldToObject, vert);
                     }
                     // Generate the far/back cap away from the light
                     if (isFacingLight) // Only for the vertices facing light
@@ -321,11 +358,16 @@ Shader "Unlit/ShadowVolumeObjects"
 
                         // Calculate normals for each adj triangle
                         ns[0] = cross(sixVertices[extraV].xyz - sixVertices[v0].xyz, sixVertices[v2].xyz - sixVertices[v0].xyz);
+                        //ns[0] = cross(mul(unity_ObjectToWorld, sixVertices[extraV]).xyz - mul(unity_ObjectToWorld,sixVertices[v0]).xyz, 
+                            //mul(unity_ObjectToWorld, sixVertices[v2]).xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz);
                         //ns[1] = cross(sixVertices[v2].xyz - sixVertices[extraV].xyz, sixVertices[v0].xyz - sixVertices[extraV].xyz);
                         //ns[2] = cross(sixVertices[v0].xyz - sixVertices[v2].xyz, sixVertices[extraV].xyz - sixVertices[v2].xyz);
 
                         // Compute direction from vertices to light
-                        lds[0] = _LightSourcePosition1.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
+                        //lds[0] = lightObjPos.xyz - sixVertices[v0].xyz;
+                         lds[0] = _LightSourcePosition1.xyz - mul(unity_ObjectToWorld, sixVertices[v0]).xyz;
+
+
                         //lds[1] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[extraV]).xyz;
                         //lds[2] = _LightSourcePosition.xyz - mul(unity_ObjectToWorld, sixVertices[v2]).xyz;
 
@@ -1109,11 +1151,11 @@ Shader "Unlit/ShadowVolumeObjects"
             Cull Back
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref 1
-                Comp equal 
-            }
+            //Stencil
+            //{
+            //    Ref 1
+            //    Comp equal 
+            //}
 
             CGPROGRAM
             #pragma vertex vert
