@@ -55,10 +55,5 @@ public class GameManager : MonoBehaviour
             SceneManager.LoadScene("GlassObjectsScene");
             MovementManager.SetIsStarting(true);
         }
-        else if (Input.GetKeyDown(KeyCode.Keypad5) || Input.GetKeyDown(KeyCode.Alpha5))
-        {
-            SceneManager.LoadScene("ColouredGlassScene");
-            MovementManager.SetIsStarting(true);
-        }
     }
 }
